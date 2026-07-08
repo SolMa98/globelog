@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · 국가 관리</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/vendor/tom-select.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<div th:replace="~{admin/fragments/nav}"></div>
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <span>Globelog Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>국가 관리</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="open-country-create" class="btn btn-primary btn-sm">+ 국가 등록</button>
+            <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
+        </div>
+    </div>
+    <div class="table-card">
+        <div class="list-toolbar">
+            <h2 class="list-toolbar-title">
+                국가 목록
+                <span class="total-count">총 <span th:text="${countries.totalElements}"></span>건</span>
+            </h2>
+            <form method="get" th:action="@{/admin/countries}" class="search-group" style="margin:0">
+                <input type="text" name="keyword" th:value="${keyword}" placeholder="국가명 검색">
+                <button type="submit" aria-label="검색">🔍</button>
+            </form>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th style="width:52px;text-align:center">국기</th>
+                <th style="width:90px">코드</th>
+                <th>국가명(한글)</th>
+                <th>국가명(영문)</th>
+                <th style="width:90px">상태</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="country : ${countries}" class="js-row-edit" th:data-id="${country.id}">
+                <td style="text-align:center">
+                    <img th:if="${country.isoA2 != null}"
+                         th:src="'https://flagcdn.com/w40/' + ${#strings.toLowerCase(country.isoA2)} + '.png'"
+                         class="flag-thumb" alt="" />
+                    <span th:if="${country.isoA2 == null}" class="muted">—</span>
+                </td>
+                <td><span class="badge" th:text="${country.isoA3}"></span></td>
+                <td th:text="${country.nameKo}"></td>
+                <td class="muted" th:text="${country.nameEn}"></td>
+                <td>
+                    <span th:if="${country.enabled}" class="badge badge-success">사용중</span>
+                    <span th:unless="${country.enabled}" class="badge badge-gray">차단됨</span>
+                </td>
+            </tr>
+            <tr th:if="${countries.isEmpty()}">
+                <td colspan="5" class="empty">등록된 국가가 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="list-footer" th:if="${countries.totalPages > 0}">
+            <div class="page-size-wrap">
+                <button type="button" class="page-size-btn" data-page-size-dec aria-label="줄이기">−</button>
+                <input type="number" class="page-size-input" data-page-size-input
+                       min="5" max="200" th:value="${countries.size}" aria-label="페이지당 행 수">
+                <button type="button" class="page-size-btn" data-page-size-inc aria-label="늘리기">+</button>
+            </div>
+            <ul class="pagination" aria-label="페이지 탐색">
+                <li th:class="${countries.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${countries.first} ? '#' : @{/admin/countries(page=0,keyword=${keyword})}"
+                       th:attr="tabindex=${countries.first} ? '-1' : null,aria-disabled=${countries.first} ? 'true' : null"
+                       aria-label="처음">«</a>
+                </li>
+                <li th:class="${countries.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${countries.first} ? '#' : @{/admin/countries(page=${countries.number - 1},keyword=${keyword})}"
+                       th:attr="tabindex=${countries.first} ? '-1' : null,aria-disabled=${countries.first} ? 'true' : null"
+                       aria-label="이전">‹</a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:each="i : ${#numbers.sequence(0, countries.totalPages - 1)}"
+                    th:if="${i >= countries.number - 2 and i <= countries.number + 2}"
+                    th:class="${i == countries.number} ? 'paging-num active' : 'paging-num'">
+                    <a th:href="@{/admin/countries(page=${i},keyword=${keyword})}"
+                       th:text="${i + 1}"
+                       th:attr="aria-current=${i == countries.number} ? 'page' : null"></a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:class="${countries.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${countries.last} ? '#' : @{/admin/countries(page=${countries.number + 1},keyword=${keyword})}"
+                       th:attr="tabindex=${countries.last} ? '-1' : null,aria-disabled=${countries.last} ? 'true' : null"
+                       aria-label="다음">›</a>
+                </li>
+                <li th:class="${countries.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${countries.last} ? '#' : @{/admin/countries(page=${countries.totalPages - 1},keyword=${keyword})}"
+                       th:attr="tabindex=${countries.last} ? '-1' : null,aria-disabled=${countries.last} ? 'true' : null"
+                       aria-label="마지막">»</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- ── 국가 등록 모달 ────────────────────────────── -->
+<div id="country-create-modal" class="modal-backdrop">
+    <div class="modal modal-wide">
+        <div class="modal-header">
+            <h2>국가 등록</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <form id="country-create-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="isoA3" id="create-iso-a3">
+            <input type="hidden" name="isoA2" id="create-iso-a2">
+            <div class="modal-body">
+                <label>
+                    국가 선택
+                    <select id="create-country-ref-select" required>
+                        <option value="">국가를 선택하세요</option>
+                    </select>
+                </label>
+                <p class="field-hint">선택 시 아래 항목이 자동으로 채워집니다. 필요하면 수정할 수 있습니다.</p>
+                <div class="flag-preview-row" id="create-flag-row" style="display:none">
+                    <img id="create-flag-preview" class="flag-preview" alt="국기 미리보기">
+                </div>
+                <div class="form-row">
+                    <label>
+                        국가명(한글)
+                        <input type="text" name="nameKo" id="create-name-ko" required>
+                    </label>
+                    <label>
+                        국가명(영문)
+                        <input type="text" name="nameEn" id="create-name-en" required>
+                    </label>
+                </div>
+                <label>
+                    설명
+                    <textarea name="description" rows="4"></textarea>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+                <button type="submit" class="btn btn-primary">등록</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── 국가 수정 모달 ────────────────────────────── -->
+<div id="country-edit-modal" class="modal-backdrop">
+    <div class="modal modal-wide">
+        <div class="modal-header">
+            <h2>국가 수정 <span class="badge js-iso"></span></h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="flag-preview-row js-flag-preview-row" style="display:none">
+                <img class="js-flag-preview flag-preview" alt="국기 미리보기">
+            </div>
+            <form id="country-edit-form" class="js-country-edit-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>
+                    ISO Alpha-2 (국기 코드, 예: KR)
+                    <input type="text" name="isoA2" maxlength="2" placeholder="KR">
+                </label>
+                <div class="form-row">
+                    <label>
+                        국가명(한글)
+                        <input type="text" name="nameKo" required>
+                    </label>
+                    <label>
+                        국가명(영문)
+                        <input type="text" name="nameEn" required>
+                    </label>
+                </div>
+                <label>
+                    설명
+                    <textarea name="description" rows="4"></textarea>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="enabled" value="true">
+                    이 국가로 신규 여행 등록 허용(사용중)
+                </label>
+            </form>
+            <div class="card danger-zone">
+                <div>
+                    <strong>국가 삭제</strong>
+                    <p class="muted">등록된 지역, 여행 기록이 함께 삭제됩니다.</p>
+                </div>
+                <form class="js-country-delete-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-danger">삭제</button>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+            <button type="submit" form="country-edit-form" class="btn btn-primary">저장</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/vendor/tom-select.complete.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/admin-countries.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

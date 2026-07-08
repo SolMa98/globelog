@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 2단계 인증</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <div class="login-form card">
+        <div class="login-brand">🔐</div>
+        <h1>2단계 인증</h1>
+        <p th:if="${error}" class="error" style="text-align:center;margin:0" th:text="${error}"></p>
+
+        <form th:if="${totpEnabled}" th:action="@{/login/2fa/verify-totp}" method="post">
+            <label>
+                인증 앱(Google OTP) 코드
+                <input type="text" name="code" inputmode="numeric" maxlength="6" autofocus autocomplete="one-time-code">
+            </label>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px">확인</button>
+        </form>
+
+        <div th:if="${emailOtpEnabled}" style="margin-top:16px">
+            <form th:action="@{/login/2fa/email-code/send}" method="post" id="send-email-code-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            </form>
+            <button type="button" class="btn btn-block" id="send-email-code-btn">이메일로 코드 받기</button>
+
+            <form th:action="@{/login/2fa/verify-email-code}" method="post" style="margin-top:8px">
+                <label>
+                    이메일로 받은 코드
+                    <input type="text" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+                </label>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px">확인</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    var sendBtn = document.getElementById('send-email-code-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function () {
+            var form = document.getElementById('send-email-code-form');
+            fetch(form.action, {
+                method: 'POST',
+                headers: {'X-Requested-With': 'fetch'},
+                body: new URLSearchParams(new FormData(form))
+            }).then(function () {
+                sendBtn.textContent = '코드를 보냈습니다. 메일함을 확인하세요.';
+                sendBtn.disabled = true;
+            });
+        });
+    }
+</script>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

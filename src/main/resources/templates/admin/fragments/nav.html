@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav th:fragment="nav" class="snb"
+     th:classappend="${activeMenu != null} ? 'sub-opened'">
+
+    <!-- 왼쪽 아이콘 스트립 -->
+    <div class="snb-main">
+        <div class="snb-brand">
+            <span class="snb-brand-icon"><img th:src="@{/favicon.svg}" alt="Globelog"></span>
+        </div>
+
+        <div class="snb-main-list">
+            <ul class="snb-icon-list">
+                <!-- 데이터 관리 -->
+                <li class="snb-item" data-menu="menu1"
+                    th:classappend="${activeMenu == 'countries' or activeMenu == 'regions' or activeMenu == 'trips' or activeMenu == 'stats'} ? 'active'">
+                    <a href="#" aria-label="데이터 관리">
+                        <span aria-hidden="true">🗂</span>
+                        <span class="snb-tooltip">데이터 관리</span>
+                    </a>
+                </li>
+                <!-- 시스템 (최상위 관리자 전용) -->
+                <li class="snb-item" data-menu="menu2"
+                    th:classappend="${activeMenu == 'accounts'} ? 'active'"
+                    sec:authorize="hasRole('SUPER_ADMIN')">
+                    <a href="#" aria-label="시스템">
+                        <span aria-hidden="true">⚙️</span>
+                        <span class="snb-tooltip">시스템</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="snb-bottom">
+            <button type="button" class="snb-theme-btn" id="snb-theme-toggle" aria-label="테마 전환">
+                <span id="snb-theme-icon">☀️</span>
+            </button>
+            <form th:action="@{/admin/logout}" method="post" style="gap:0;padding:0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="snb-logout-btn" aria-label="로그아웃">↩</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 오른쪽 서브메뉴 패널 -->
+    <div class="snb-sub">
+        <div class="snb-sub-header">
+            <span class="snb-sub-logo">Globelog Admin</span>
+            <button type="button" class="snb-sub-close" id="snb-close" aria-label="닫기">×</button>
+        </div>
+
+        <!-- 데이터 관리 서브메뉴 -->
+        <div class="snb-submenu" id="menu1"
+             th:classappend="${activeMenu == 'countries' or activeMenu == 'regions' or activeMenu == 'trips' or activeMenu == 'stats'} ? 'active'">
+            <div class="snb-submenu-title">데이터 관리</div>
+            <ul class="snb-submenu-list">
+                <li>
+                    <a th:href="@{/admin/countries}"
+                       th:classappend="${activeMenu == 'countries'} ? 'active'">
+                        🌍 국가 관리
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/regions}"
+                       th:classappend="${activeMenu == 'regions'} ? 'active'">
+                        📍 지역 관리
+                    </a>
+                </li>
+                <li sec:authorize="hasRole('SUPER_ADMIN')">
+                    <a th:href="@{/admin/trips}"
+                       th:classappend="${activeMenu == 'trips'} ? 'active'">
+                        ✈️ 여행 관리
+                    </a>
+                </li>
+                <li sec:authorize="hasRole('SUPER_ADMIN')">
+                    <a th:href="@{/admin/stats}"
+                       th:classappend="${activeMenu == 'stats'} ? 'active'">
+                        📊 통계
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 시스템 서브메뉴 (최상위 관리자 전용) -->
+        <div class="snb-submenu" id="menu2"
+             th:classappend="${activeMenu == 'accounts'} ? 'active'"
+             sec:authorize="hasRole('SUPER_ADMIN')">
+            <div class="snb-submenu-title">시스템</div>
+            <ul class="snb-submenu-list">
+                <li>
+                    <a th:href="@{/admin/accounts}"
+                       th:classappend="${activeMenu == 'accounts'} ? 'active'">
+                        👤 계정 관리
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 하단 유저 정보 -->
+        <div class="snb-sub-bottom">
+            <div class="snb-user">
+                <div class="snb-user-avatar"
+                     th:text="${#authentication != null and #authentication.name != null ? #authentication.name.substring(0, 1).toUpperCase() : 'A'}"
+                     sec:authorize="isAuthenticated()">A</div>
+                <div class="snb-user-info">
+                    <div class="snb-user-name" sec:authentication="name">admin</div>
+                    <div class="snb-user-role">
+                        <span sec:authorize="hasRole('SUPER_ADMIN')">최상위 관리자</span>
+                        <span sec:authorize="hasRole('MODERATOR')">모더레이터</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</nav>
+</body>
+</html>

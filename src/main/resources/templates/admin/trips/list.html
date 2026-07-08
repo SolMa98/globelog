@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · 여행 관리</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/vendor/tom-select.min.css}">
+    <link rel="stylesheet" th:href="@{/css/vendor/flatpickr.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<div th:replace="~{admin/fragments/nav}"></div>
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <span>Globelog Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>여행 관리</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="open-trip-create" class="btn btn-primary btn-sm">+ 여행 등록</button>
+            <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
+        </div>
+    </div>
+    <div class="table-card">
+        <div class="list-toolbar">
+            <h2 class="list-toolbar-title">
+                여행 목록
+                <span class="total-count">총 <span th:text="${trips.totalElements}"></span>건</span>
+            </h2>
+            <form method="get" th:action="@{/admin/trips}" class="form-row-filter">
+                <select name="countryId" id="filter-country"
+                        style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                    <option value="">전체 국가</option>
+                    <option th:each="c : ${countries}" th:value="${c.id}" th:text="${c.nameKo}"
+                            th:selected="${c.id == selectedCountryId}"></option>
+                </select>
+                <select name="regionId" id="filter-region"
+                        style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                    <option value="">전체 지역</option>
+                    <option th:each="r : ${regions}" th:value="${r.id}" th:text="${r.nameKo}"
+                            th:selected="${r.id == selectedRegionId}"></option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">검색</button>
+            </form>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>국가</th>
+                <th>지역</th>
+                <th>제목</th>
+                <th>방문일</th>
+                <th>피드 우선순위</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="trip : ${trips}" class="js-row-edit" th:data-id="${trip.id}">
+                <td><span class="badge" th:text="${trip.country.nameKo}"></span></td>
+                <td th:text="${trip.region != null ? trip.region.nameKo : '—'}"></td>
+                <td th:text="${trip.title}"></td>
+                <td class="muted" th:text="${trip.visitedDate}"></td>
+                <td>
+                    <span th:if="${trip.priority > 0}" class="badge badge-success" th:text="'⭐ ' + ${trip.priority}"></span>
+                    <span th:if="${trip.priority == 0}" class="muted">—</span>
+                </td>
+            </tr>
+            <tr th:if="${trips.isEmpty()}">
+                <td colspan="5" class="empty">등록된 여행이 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="list-footer" th:if="${trips.totalPages > 0}">
+            <div class="page-size-wrap">
+                <button type="button" class="page-size-btn" data-page-size-dec aria-label="줄이기">−</button>
+                <input type="number" class="page-size-input" data-page-size-input
+                       min="5" max="200" th:value="${trips.size}" aria-label="페이지당 행 수">
+                <button type="button" class="page-size-btn" data-page-size-inc aria-label="늘리기">+</button>
+            </div>
+            <ul class="pagination" aria-label="페이지 탐색">
+                <li th:class="${trips.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${trips.first} ? '#' : @{/admin/trips(page=0,regionId=${selectedRegionId},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${trips.first} ? '-1' : null,aria-disabled=${trips.first} ? 'true' : null"
+                       aria-label="처음">«</a>
+                </li>
+                <li th:class="${trips.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${trips.first} ? '#' : @{/admin/trips(page=${trips.number - 1},regionId=${selectedRegionId},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${trips.first} ? '-1' : null,aria-disabled=${trips.first} ? 'true' : null"
+                       aria-label="이전">‹</a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:each="i : ${#numbers.sequence(0, trips.totalPages - 1)}"
+                    th:if="${i >= trips.number - 2 and i <= trips.number + 2}"
+                    th:class="${i == trips.number} ? 'paging-num active' : 'paging-num'">
+                    <a th:href="@{/admin/trips(page=${i},regionId=${selectedRegionId},countryId=${selectedCountryId})}"
+                       th:text="${i + 1}"
+                       th:attr="aria-current=${i == trips.number} ? 'page' : null"></a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:class="${trips.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${trips.last} ? '#' : @{/admin/trips(page=${trips.number + 1},regionId=${selectedRegionId},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${trips.last} ? '-1' : null,aria-disabled=${trips.last} ? 'true' : null"
+                       aria-label="다음">›</a>
+                </li>
+                <li th:class="${trips.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${trips.last} ? '#' : @{/admin/trips(page=${trips.totalPages - 1},regionId=${selectedRegionId},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${trips.last} ? '-1' : null,aria-disabled=${trips.last} ? 'true' : null"
+                       aria-label="마지막">»</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- ── 여행 등록 모달 ────────────────────────────── -->
+<div id="trip-create-modal" class="modal-backdrop">
+    <div class="modal modal-wide">
+        <div class="modal-header">
+            <h2>여행 등록</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <form id="trip-create-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="modal-body">
+                <label>
+                    국가
+                    <select name="countryId" id="create-country" required>
+                        <option value="">국가 선택</option>
+                        <option th:each="c : ${countries}" th:value="${c.id}" th:text="${c.nameKo}"></option>
+                    </select>
+                </label>
+                <label>
+                    지역 <span class="muted" style="font-weight:400;font-size:12px">(선택 사항)</span>
+                    <select name="regionId" id="create-region">
+                        <option value="">지역 선택</option>
+                    </select>
+                </label>
+                <label>
+                    여행 제목
+                    <input type="text" name="title" required>
+                </label>
+                <label>
+                    여행 기간
+                    <input type="text" id="create-date-range" class="flatpickr-input" placeholder="날짜를 선택하세요" readonly="readonly">
+                    <input type="hidden" name="visitedDate" id="create-visited-date">
+                    <input type="hidden" name="endDate" id="create-end-date">
+                </label>
+                <label>
+                    설명
+                    <textarea name="description" rows="4"></textarea>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+                <button type="submit" class="btn btn-primary">등록</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── 여행 수정 모달 ────────────────────────────── -->
+<div id="trip-edit-modal" class="modal-backdrop">
+    <div class="modal modal-wide">
+        <div class="modal-header">
+            <h2>여행 수정</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-section-title">
+                <span class="badge js-trip-country"></span>
+                <span class="muted js-trip-region" style="margin-left:6px"></span>
+            </p>
+            <form id="trip-edit-form" class="js-trip-edit-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>
+                    여행 제목
+                    <input type="text" name="title" required>
+                </label>
+                <label>
+                    여행 기간
+                    <input type="text" id="edit-date-range" class="flatpickr-input" placeholder="날짜를 선택하세요" readonly="readonly">
+                    <input type="hidden" name="visitedDate" id="edit-visited-date">
+                    <input type="hidden" name="endDate" id="edit-end-date">
+                </label>
+                <label>
+                    설명
+                    <textarea name="description" rows="4"></textarea>
+                </label>
+                <label>
+                    피드 노출 우선순위 <span class="muted" style="font-weight:400;font-size:12px">(0~5, 높을수록 랜덤 피드에 더 자주 노출됨)</span>
+                    <input type="number" name="priority" id="edit-priority" min="0" max="5" value="0">
+                </label>
+            </form>
+            <div>
+                <p class="modal-section-title">사진</p>
+                <ul class="image-grid js-image-grid"></ul>
+                <p class="empty js-image-empty">등록된 사진이 없습니다.</p>
+                <form class="upload-row js-image-upload-form" enctype="multipart/form-data">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="file" name="file" accept="image/*" required>
+                    <button type="submit" class="btn btn-secondary btn-sm">사진 추가</button>
+                </form>
+            </div>
+            <div class="card danger-zone">
+                <div>
+                    <strong>여행 삭제</strong>
+                    <p class="muted">등록된 사진도 함께 삭제됩니다.</p>
+                </div>
+                <form class="js-trip-delete-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-danger">삭제</button>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+            <button type="submit" form="trip-edit-form" class="btn btn-primary">저장</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/vendor/tom-select.complete.min.js}"></script>
+<script th:src="@{/js/vendor/flatpickr.min.js}"></script>
+<script th:src="@{/js/vendor/flatpickr-ko.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/admin-trips.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

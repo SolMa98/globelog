@@ -1,0 +1,6 @@
+countries.geojson is derived from Natural Earth (1:110m Admin 0 Countries),
+https://www.naturalearthdata.com/ — Natural Earth data is in the public domain.
+
+../images/earth_terrain.jpg is a downsampled/recompressed copy of Natural
+Earth II Shaded Relief, Water (NE2_50M_SR_W), also from
+https://www.naturalearthdata.com/ — public domain.

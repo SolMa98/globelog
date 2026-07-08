@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 보안 설정</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <div class="login-form card" style="max-width:420px">
+        <h1>보안 설정</h1>
+        <p style="text-align:center;margin:0 0 8px;font-size:13px">
+            <a th:href="@{/}">← 피드로</a>
+        </p>
+        <p th:if="${message}" class="info" style="text-align:center;margin:0" th:text="${message}"></p>
+        <p th:if="${error}" class="error" style="text-align:center;margin:0" th:text="${error}"></p>
+
+        <h2 style="font-size:15px;margin:16px 0 4px">인증 앱(Google OTP)</h2>
+        <div th:if="${qrDataUri == null}">
+            <p class="muted" style="font-size:13px;margin:0 0 8px">
+                <span th:text="${totpEnabled} ? '현재 켜져 있습니다.' : '꺼져 있습니다.'"></span>
+            </p>
+            <form th:if="${!totpEnabled}" th:action="@{/my/security/totp/setup}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-primary btn-block">등록 시작</button>
+            </form>
+            <form th:if="${totpEnabled}" th:action="@{/my/security/totp/disable}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-ghost btn-block">끄기</button>
+            </form>
+        </div>
+        <div th:if="${qrDataUri != null}">
+            <p class="muted" style="font-size:13px">Google Authenticator 등 인증 앱으로 아래 QR을 스캔한 뒤, 앱에 표시되는 6자리 코드를 입력해 등록을 완료하세요.</p>
+            <img th:src="${qrDataUri}" alt="TOTP QR 코드" style="display:block;margin:0 auto 8px">
+            <p class="muted" style="font-size:12px;text-align:center;word-break:break-all" th:text="${secret}"></p>
+            <form th:action="@{/my/security/totp/confirm}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>
+                    확인 코드
+                    <input type="text" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+                </label>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px">등록 완료</button>
+            </form>
+        </div>
+
+        <h2 style="font-size:15px;margin:20px 0 4px">이메일 인증 코드</h2>
+        <p class="muted" style="font-size:13px;margin:0 0 8px">
+            <span th:text="${emailOtpEnabled} ? '현재 켜져 있습니다.' : '꺼져 있습니다.'"></span>
+        </p>
+        <form th:action="@{/my/security/email-otp/toggle}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="submit" class="btn btn-block" th:classappend="${emailOtpEnabled} ? 'btn-ghost' : 'btn-primary'">
+                <span th:text="${emailOtpEnabled} ? '끄기' : '켜기'"></span>
+            </button>
+        </form>
+    </div>
+</div>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

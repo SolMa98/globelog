@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 추가 정보 입력</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <form class="login-form card" th:action="@{/signup/social/complete}" method="post">
+        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+        <h1>거의 다 됐어요</h1>
+        <p style="text-align:center;margin:0;font-size:13px" class="muted">
+            <span th:text="${email}"></span> 계정으로 처음 로그인하셨네요. 사용하실 닉네임을 정해주세요.
+        </p>
+        <p th:if="${error}" class="error" style="text-align:center;margin:0" th:text="${error}"></p>
+        <label>
+            닉네임
+            <input type="text" id="social-signup-nickname" name="nickname" autofocus autocomplete="nickname" maxlength="30" required>
+        </label>
+        <input type="hidden" id="identity-verification-id" name="identityVerificationId">
+        <button type="button" id="identity-verify-btn" class="btn btn-block" style="margin-top:8px">본인인증하기</button>
+        <button type="submit" id="social-signup-submit" class="btn btn-primary btn-block" style="margin-top:4px" disabled>시작하기</button>
+    </form>
+</div>
+<script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/identity-verification.js}"></script>
+<script th:inline="javascript">
+    initIdentityVerification({
+        storeId: /*[[${portoneStoreId}]]*/ '',
+        channelKey: /*[[${portoneChannelKey}]]*/ '',
+        buttonId: 'identity-verify-btn',
+        hiddenInputId: 'identity-verification-id',
+        submitButtonId: 'social-signup-submit',
+        preserveFieldIds: ['social-signup-nickname']
+    });
+</script>
+</body>
+</html>

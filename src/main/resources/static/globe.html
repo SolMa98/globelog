@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 지구본</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/vendor/maplibre-gl.min.css">
+</head>
+<body>
+
+<!-- 3D 지구본 뷰 -->
+<div id="globe-view">
+    <div id="globe-container"></div>
+    <div id="search-box">
+        <input id="search-input" type="text" placeholder="국가 검색 (예: 대한민국)" autocomplete="off">
+        <ul id="search-results" class="hidden"></ul>
+    </div>
+    <div id="globe-lang-toggle" role="group" aria-label="지구본 언어">
+        <button class="lang-btn" data-lang="ko">한국어</button>
+        <button class="lang-btn" data-lang="en">English</button>
+    </div>
+    <div id="globe-owner-badge" class="hidden"></div>
+    <div id="hint">마우스 드래그로 회전 · 휠로 확대/축소 · 초록색 국가를 클릭해 보세요</div>
+    <div id="loading">지구본을 불러오는 중...</div>
+
+    <!-- 로그인 상태 위젯: 비로그인=로그인/가입 링크, 로그인=닉네임+로그아웃 -->
+    <div id="account-box"></div>
+</div>
+
+<!-- 2D 지도 뷰 (국가 클릭 시 표시) -->
+<div id="map-view" class="hidden">
+    <div id="map-topbar">
+        <button id="map-back-btn">← 지구본</button>
+        <div id="map-country-info">
+            <img id="map-flag" alt="" style="display:none">
+            <span id="map-country-name"></span>
+        </div>
+        <div id="map-lang-toggle" role="group" aria-label="지도 언어">
+            <button class="lang-btn" data-lang="ko">한국어</button>
+            <button class="lang-btn" data-lang="en">English</button>
+        </div>
+    </div>
+    <div id="map-container">
+        <div id="map-tile-loading" class="hidden">
+            <span class="map-spin-icon"></span>지도 불러오는 중...
+        </div>
+    </div>
+
+    <!-- 지역 클릭 시 전체화면 스토리(방문 기록을 사진 중심 슬라이드로 훑어보기) -->
+    <div id="story-view" class="hidden">
+        <div id="story-progress"></div>
+        <button id="story-jump-toggle" aria-label="게시글 목록">☰</button>
+        <button id="story-close" aria-label="닫기">×</button>
+
+        <p id="story-loading" class="hidden">불러오는 중...</p>
+        <p id="story-empty" class="hidden">아직 등록된 여행 기록이 없습니다.</p>
+
+        <div id="story-slide" class="hidden">
+            <div id="story-media"></div>
+            <div id="story-nav-prev" aria-label="이전"></div>
+            <div id="story-nav-next" aria-label="다음"></div>
+            <div id="story-overlay">
+                <div id="story-region-name"></div>
+                <div id="story-visit-badge"></div>
+                <h3 id="story-title"></h3>
+                <div id="story-date"></div>
+                <p id="story-description"></p>
+            </div>
+        </div>
+
+        <!-- 순차재생 없이 특정 게시글로 바로 점프하는 목록 -->
+        <div id="story-jump-list" class="hidden">
+            <div id="story-jump-list-header">
+                <h4>게시글 선택</h4>
+                <button id="story-jump-close" aria-label="닫기">×</button>
+            </div>
+            <ul id="story-jump-items"></ul>
+        </div>
+    </div>
+</div>
+
+<script src="/js/vendor/maplibre-gl.min.js"></script>
+<script src="/js/map.js"></script>
+<script src="/js/globe.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

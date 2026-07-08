@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 로그인</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .social-login-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 18px 0 12px;
+            color: var(--muted, #8a8f98);
+            font-size: 12px;
+        }
+        .social-login-divider::before,
+        .social-login-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border, #e5e7eb);
+        }
+        .social-login-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        .social-icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            text-decoration: none;
+        }
+        .social-icon-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+        .social-icon-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+        .social-icon-btn.google { background: #fff; border: 1px solid #e5e7eb; }
+        .social-icon-btn.naver { background: #03c75a; }
+        .social-icon-btn.naver span { color: #fff; font-weight: 800; font-size: 20px; line-height: 1; }
+        .social-icon-btn.kakao { background: #fee500; }
+    </style>
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <form class="login-form card" th:action="@{/login}" method="post">
+        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+        <h1>로그인</h1>
+        <p th:if="${param.error != null and param.error[0] == 'unverified'}" class="error" style="text-align:center;margin:0">
+            이메일 인증이 필요합니다. 가입 시 받은 인증 메일을 확인해주세요.
+        </p>
+        <p th:if="${param.error != null and param.error[0] == 'social'}" class="error" style="text-align:center;margin:0">
+            소셜 계정에서 인증된 이메일 정보를 받아오지 못했습니다. 다른 방법으로 로그인해주세요.
+        </p>
+        <p th:if="${param.error != null and param.error[0] != 'unverified' and param.error[0] != 'social'}" class="error" style="text-align:center;margin:0">
+            이메일 또는 비밀번호가 올바르지 않습니다.
+        </p>
+        <p th:if="${param.logout}" class="info" style="text-align:center;margin:0">
+            로그아웃되었습니다.
+        </p>
+        <p th:if="${param.signup}" class="info" style="text-align:center;margin:0">
+            인증 메일을 보냈습니다. 메일함을 확인하고 링크를 눌러 인증을 완료해주세요.
+        </p>
+        <p th:if="${param.verified}" class="info" style="text-align:center;margin:0">
+            이메일 인증이 완료됐습니다. 로그인해주세요.
+        </p>
+        <p th:if="${param.verifyFailed}" class="error" style="text-align:center;margin:0">
+            인증 링크가 유효하지 않거나 만료됐습니다. 다시 가입하거나 인증 메일을 재발송해주세요.
+        </p>
+        <label>
+            이메일
+            <input type="email" name="username" autofocus autocomplete="username">
+        </label>
+        <label>
+            비밀번호
+            <input type="password" name="password" autocomplete="current-password">
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px">로그인</button>
+        <p style="text-align:center;margin:12px 0 0;font-size:13px">
+            계정이 없으신가요? <a th:href="@{/signup}">회원가입</a>
+        </p>
+        <div class="social-login-divider">간편 로그인</div>
+        <div class="social-login-row">
+            <a th:href="@{/oauth2/authorization/google}" class="social-icon-btn google" aria-label="Google로 로그인" title="Google로 로그인">
+                <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.583-5.036-3.71H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                    <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                </svg>
+            </a>
+            <a th:href="@{/oauth2/authorization/naver}" class="social-icon-btn naver" aria-label="네이버로 로그인" title="네이버로 로그인">
+                <span>N</span>
+            </a>
+            <a th:href="@{/oauth2/authorization/kakao}" class="social-icon-btn kakao" aria-label="카카오로 로그인" title="카카오로 로그인">
+                <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#3C1E1E" d="M10 3C5.58 3 2 5.79 2 9.23c0 2.19 1.46 4.12 3.66 5.24-.16.58-.58 2.1-.66 2.43-.1.4.15.4.31.29.13-.09 2.05-1.39 2.88-1.95.6.09 1.2.14 1.81.14 4.42 0 8-2.79 8-6.23S14.42 3 10 3z"/>
+                </svg>
+            </a>
+        </div>
+    </form>
+</div>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

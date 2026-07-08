@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s --max-time 120 -o /private/tmp/claude-501/-Users-cnai01-Documents-work-side/31d99986-606a-4ab4-ba76-f4d6fcfe031e/scratchpad/ne_10m_admin1.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson)",
+      "Bash(python3 *)",
+      "Bash(curl -s -c /tmp/admincook.txt -b /tmp/admincook.txt -X POST http://localhost:8080/admin/login -d 'username=admin&password=changeme123' -L -D - -o /dev/null)",
+      "Bash(curl -s -b /tmp/admincook.txt http://localhost:8080/admin/regions/1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{size_download}bytes\\\\n\" http://localhost:8080/data/provinces.json)",
+      "Bash(curl -s http://localhost:8080/data/provinces.json)",
+      "Bash(pkill -f SideApplication)",
+      "Bash(./gradlew bootRun --no-daemon -q)",
+      "Bash(curl -s http://localhost:8080/data/countries-ref.json)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/admin/login)",
+      "Bash(curl -s http://localhost:8080/css/admin.css)",
+      "Bash(curl *)",
+      "Bash(xargs kill -9)",
+      "Bash(./gradlew bootRun --no-daemon)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(xargs ls -la)",
+      "Bash(mysql *)",
+      "Bash(./gradlew bootRun --console=plain)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(pkill -f \"gradle-wrapper.jar bootRun\")",
+      "Bash(pkill -f \"kr.co.dh.side.SideApplication\")",
+      "Bash(xargs -I{} basename {})"
+    ]
+  }
+}

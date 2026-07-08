@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · 통계</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<div th:replace="~{admin/fragments/nav}"></div>
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <span>Globelog Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>통계</span>
+        </nav>
+    </div>
+    <p class="muted" style="margin:-8px 0 16px;font-size:13px">
+        ⓘ 전체 사용자의 여행 기록을 합산한 통계입니다(공개범위와 무관하게 비공개·친구공개 여행 포함). 개인별 통계는 아직 제공하지 않습니다.
+    </p>
+
+    <div class="stats-grid">
+        <div class="card stat-card">
+            <div class="stat-label">방문 국가</div>
+            <div class="stat-number" id="stat-visited-count">-</div>
+            <div class="stat-sub" id="stat-visited-sub"></div>
+            <div class="chart-box chart-box-sm">
+                <canvas id="chart-visited"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="list-toolbar-title">연도별 여행 횟수</h2>
+            <div class="chart-box">
+                <canvas id="chart-yearly"></canvas>
+            </div>
+        </div>
+
+        <div class="card stats-grid-full">
+            <h2 class="list-toolbar-title">대륙별 방문 커버리지</h2>
+            <div class="chart-box">
+                <canvas id="chart-continent"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+<script th:src="@{/js/admin.js}"></script>
+<script th:src="@{/js/vendor/chart.min.js}"></script>
+<script th:src="@{/js/admin-stats.js}"></script>
+</body>
+</html>

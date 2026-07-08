@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · 지역 관리</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/vendor/tom-select.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<div th:replace="~{admin/fragments/nav}"></div>
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <span>Globelog Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>지역 관리</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="open-region-create" class="btn btn-primary btn-sm">+ 지역 등록</button>
+            <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
+        </div>
+    </div>
+    <div class="table-card">
+        <div class="list-toolbar">
+            <h2 class="list-toolbar-title">
+                지역 목록
+                <span class="total-count">총 <span th:text="${regions.totalElements}"></span>건</span>
+            </h2>
+            <form method="get" th:action="@{/admin/regions}" style="margin:0">
+                <select name="countryId" onchange="this.form.submit()"
+                        style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                    <option value="">전체 국가</option>
+                    <option th:each="c : ${countries}" th:value="${c.id}" th:text="${c.nameKo}"
+                            th:selected="${c.id == selectedCountryId}"></option>
+                </select>
+            </form>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>소속 국가</th>
+                <th>지역명(한글)</th>
+                <th>지역명(영문)</th>
+                <th>중심 좌표</th>
+                <th style="width:90px">상태</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="region : ${regions}" class="js-row-edit" th:data-id="${region.id}">
+                <td><span class="badge" th:text="${region.country.nameKo}"></span></td>
+                <td th:text="${region.nameKo}"></td>
+                <td class="muted" th:text="${region.nameEn}"></td>
+                <td class="muted" style="font-size:12px"
+                    th:text="${region.centerLat != null ? region.centerLat + ', ' + region.centerLng : '—'}"></td>
+                <td>
+                    <span th:if="${region.enabled}" class="badge badge-success">사용중</span>
+                    <span th:unless="${region.enabled}" class="badge badge-gray">차단됨</span>
+                </td>
+            </tr>
+            <tr th:if="${regions.isEmpty()}">
+                <td colspan="5" class="empty">등록된 지역이 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="list-footer" th:if="${regions.totalPages > 0}">
+            <div class="page-size-wrap">
+                <button type="button" class="page-size-btn" data-page-size-dec aria-label="줄이기">−</button>
+                <input type="number" class="page-size-input" data-page-size-input
+                       min="5" max="200" th:value="${regions.size}" aria-label="페이지당 행 수">
+                <button type="button" class="page-size-btn" data-page-size-inc aria-label="늘리기">+</button>
+            </div>
+            <ul class="pagination" aria-label="페이지 탐색">
+                <li th:class="${regions.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${regions.first} ? '#' : @{/admin/regions(page=0,countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${regions.first} ? '-1' : null,aria-disabled=${regions.first} ? 'true' : null"
+                       aria-label="처음">«</a>
+                </li>
+                <li th:class="${regions.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${regions.first} ? '#' : @{/admin/regions(page=${regions.number - 1},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${regions.first} ? '-1' : null,aria-disabled=${regions.first} ? 'true' : null"
+                       aria-label="이전">‹</a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:each="i : ${#numbers.sequence(0, regions.totalPages - 1)}"
+                    th:if="${i >= regions.number - 2 and i <= regions.number + 2}"
+                    th:class="${i == regions.number} ? 'paging-num active' : 'paging-num'">
+                    <a th:href="@{/admin/regions(page=${i},countryId=${selectedCountryId})}"
+                       th:text="${i + 1}"
+                       th:attr="aria-current=${i == regions.number} ? 'page' : null"></a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:class="${regions.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${regions.last} ? '#' : @{/admin/regions(page=${regions.number + 1},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${regions.last} ? '-1' : null,aria-disabled=${regions.last} ? 'true' : null"
+                       aria-label="다음">›</a>
+                </li>
+                <li th:class="${regions.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${regions.last} ? '#' : @{/admin/regions(page=${regions.totalPages - 1},countryId=${selectedCountryId})}"
+                       th:attr="tabindex=${regions.last} ? '-1' : null,aria-disabled=${regions.last} ? 'true' : null"
+                       aria-label="마지막">»</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- ── 지역 등록 모달 ────────────────────────────── -->
+<div id="region-create-modal" class="modal-backdrop">
+    <div class="modal modal-wide">
+        <div class="modal-header">
+            <h2>지역 등록</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <form id="region-create-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="modal-body">
+                <label>
+                    소속 국가
+                    <select name="countryId" id="create-country-select" required>
+                        <option value="">국가 선택</option>
+                        <option th:each="c : ${countries}"
+                                th:value="${c.id}"
+                                th:attr="data-iso-a3=${c.isoA3}"
+                                th:text="${c.nameKo}"
+                                th:selected="${c.id == selectedCountryId}"></option>
+                    </select>
+                </label>
+                <label>
+                    시/도 선택
+                    <select id="create-province-select" disabled>
+                        <option value="">먼저 국가를 선택하세요</option>
+                    </select>
+                </label>
+                <p class="field-hint">선택 시 아래 항목이 자동으로 채워집니다. 필요하면 직접 수정할 수 있습니다.</p>
+                <div class="form-row">
+                    <label>
+                        지역명(한글)
+                        <input type="text" name="nameKo" id="create-name-ko" required placeholder="서울특별시">
+                    </label>
+                    <label>
+                        지역명(영문)
+                        <input type="text" name="nameEn" id="create-name-en" placeholder="Seoul">
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>
+                        중심 위도
+                        <input type="number" name="centerLat" id="create-lat" step="any" placeholder="37.5665">
+                    </label>
+                    <label>
+                        중심 경도
+                        <input type="number" name="centerLng" id="create-lng" step="any" placeholder="126.9780">
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+                <button type="submit" class="btn btn-primary">등록</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── 지역 수정 모달 ────────────────────────────── -->
+<div id="region-edit-modal" class="modal-backdrop">
+    <div class="modal modal-wide">
+        <div class="modal-header">
+            <h2>지역 수정</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="region-edit-form" class="js-region-edit-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <p class="modal-section-title">소속 국가: <span class="js-country-name muted"></span></p>
+                <label>
+                    시/도 변경 (자동입력)
+                    <select id="edit-province-select" disabled>
+                        <option value="">국가 데이터를 불러오는 중...</option>
+                    </select>
+                </label>
+                <p class="field-hint">선택 시 아래 항목이 자동으로 채워집니다.</p>
+                <div class="form-row">
+                    <label>
+                        지역명(한글)
+                        <input type="text" name="nameKo" required>
+                    </label>
+                    <label>
+                        지역명(영문)
+                        <input type="text" name="nameEn">
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>
+                        중심 위도
+                        <input type="number" name="centerLat" step="any">
+                    </label>
+                    <label>
+                        중심 경도
+                        <input type="number" name="centerLng" step="any">
+                    </label>
+                </div>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="enabled" value="true">
+                    이 지역으로 신규 여행 등록 허용(사용중)
+                </label>
+            </form>
+            <div class="card danger-zone">
+                <div>
+                    <strong>지역 삭제</strong>
+                    <p class="muted">이 지역의 여행 기록도 함께 삭제됩니다.</p>
+                </div>
+                <form class="js-region-delete-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-danger">삭제</button>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+            <button type="submit" form="region-edit-form" class="btn btn-primary">저장</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/vendor/tom-select.complete.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/admin-regions.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

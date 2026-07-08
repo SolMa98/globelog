@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · 관리자 로그인</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <form class="login-form card" th:action="@{/admin/login}" method="post">
+        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+        <h1>Globelog Admin</h1>
+        <p th:if="${param.error}" class="error" style="text-align:center;margin:0">
+            아이디 또는 비밀번호가 올바르지 않습니다.
+        </p>
+        <p th:if="${param.logout}" class="info" style="text-align:center;margin:0">
+            로그아웃되었습니다.
+        </p>
+        <label>
+            아이디
+            <input type="text" name="username" autofocus autocomplete="username">
+        </label>
+        <label>
+            비밀번호
+            <input type="password" name="password" autocomplete="current-password">
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:4px">로그인</button>
+    </form>
+</div>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${nickname} + ' · Globelog'">프로필</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <div class="card" id="profile-card" th:attr="data-nickname=${nickname}" style="max-width:420px;text-align:center">
+        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+        <h1 id="profile-nickname">-</h1>
+        <p id="profile-counts" class="muted"></p>
+        <div id="profile-actions" style="margin-top:8px"></div>
+        <p style="margin-top:16px;font-size:13px">
+            <a th:href="@{/}">← 피드로</a> · <a th:href="@{'/u/' + ${nickname} + '/globe'}">지구본 보기</a>
+        </p>
+    </div>
+</div>
+<script th:src="@{/js/profile.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

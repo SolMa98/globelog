@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 회원가입</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+</head>
+<body class="login-page">
+<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+<div class="login-wrap">
+    <form class="login-form card" id="signup-form" th:action="@{/signup}" method="post">
+        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+        <h1>회원가입</h1>
+        <p th:if="${error}" class="error" style="text-align:center;margin:0" th:text="${error}"></p>
+        <label>
+            이메일
+            <input type="email" id="signup-email" name="email" autofocus autocomplete="username" required>
+        </label>
+        <p class="muted" style="font-size:12px;margin:-4px 0 0">
+            가입 후 이 주소로 인증 메일이 발송됩니다. 메일의 링크를 눌러야 로그인할 수 있어요.
+        </p>
+        <label>
+            비밀번호 <span class="muted" style="font-weight:400;font-size:12px">(8자 이상)</span>
+            <input type="password" name="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>
+            닉네임
+            <input type="text" id="signup-nickname" name="nickname" autocomplete="nickname" maxlength="30" required>
+        </label>
+        <input type="hidden" id="identity-verification-id" name="identityVerificationId">
+        <button type="button" id="identity-verify-btn" class="btn btn-block" style="margin-top:8px">본인인증하기</button>
+        <button type="submit" id="signup-submit" class="btn btn-primary btn-block" style="margin-top:4px" disabled>가입하기</button>
+        <p style="text-align:center;margin:12px 0 0;font-size:13px">
+            이미 계정이 있으신가요? <a th:href="@{/login}">로그인</a>
+        </p>
+    </form>
+</div>
+<script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/identity-verification.js}"></script>
+<script th:inline="javascript">
+    initIdentityVerification({
+        storeId: /*[[${portoneStoreId}]]*/ '',
+        channelKey: /*[[${portoneChannelKey}]]*/ '',
+        buttonId: 'identity-verify-btn',
+        hiddenInputId: 'identity-verification-id',
+        submitButtonId: 'signup-submit',
+        preserveFieldIds: ['signup-email', 'signup-nickname']
+    });
+</script>
+</body>
+</html>
