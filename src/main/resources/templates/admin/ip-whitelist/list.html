@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · IP 화이트리스트</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<div th:replace="~{admin/fragments/nav}"></div>
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <span>Globelog Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>IP 화이트리스트</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="open-ip-create" class="btn btn-primary btn-sm">+ IP 추가</button>
+            <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
+        </div>
+    </div>
+    <div class="table-card">
+        <p class="info">
+            아래 목록은 <code>app.admin.ip-whitelist.enabled</code>가 켜져 있을 때만 실제로 적용됩니다(현재 서버 설정과 무관하게
+            여기서는 항상 등록/삭제할 수 있음). loopback(127.0.0.1/::1)은 목록과 무관하게 항상 허용됩니다.
+        </p>
+        <div class="list-toolbar">
+            <h2 class="list-toolbar-title">
+                허용 IP 목록
+                <span class="total-count">총 <span th:text="${entries.size()}"></span>건</span>
+            </h2>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>IP / CIDR</th>
+                <th>설명</th>
+                <th>등록일</th>
+                <th style="text-align:right">관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${entries}">
+                <td th:text="${entry.cidr}"></td>
+                <td th:text="${entry.description}"></td>
+                <td class="muted" th:text="${entry.createdAt}"></td>
+                <td style="text-align:right">
+                    <form th:action="@{/admin/ip-whitelist/{id}/delete(id=${entry.id})}" method="post"
+                          class="js-delete-ip" style="display:inline;gap:0">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-ghost btn-sm">삭제</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${entries.isEmpty()}">
+                <td colspan="4" class="empty">등록된 항목이 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</div>
+
+<!-- ── IP 추가 모달 ────────────────────────────── -->
+<div id="ip-create-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>IP 추가</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <form th:action="@{/admin/ip-whitelist}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="modal-body">
+                <label>
+                    IP 또는 CIDR
+                    <input type="text" name="cidr" required placeholder="203.0.113.5 또는 192.168.1.0/24" autocomplete="off">
+                </label>
+                <label>
+                    설명(선택)
+                    <input type="text" name="description" placeholder="예: 사무실" autocomplete="off">
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+                <button type="submit" class="btn btn-primary">추가</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/admin-ip-whitelist.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

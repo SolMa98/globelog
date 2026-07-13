@@ -1,6 +1,8 @@
 package kr.co.dh.globelog.security;
 
+import kr.co.dh.globelog.domain.AdminIpWhitelistEntryRepository;
 import kr.co.dh.globelog.security.oauth.CustomOAuth2UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -10,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -42,7 +45,11 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(
-            HttpSecurity http, AdminUserDetailsService adminUserDetailsService, PasswordEncoder passwordEncoder)
+            HttpSecurity http,
+            AdminUserDetailsService adminUserDetailsService,
+            PasswordEncoder passwordEncoder,
+            AdminIpWhitelistEntryRepository adminIpWhitelistEntryRepository,
+            @Value("${app.admin.ip-whitelist.enabled:false}") boolean adminIpWhitelistEnabled)
             throws Exception {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(adminUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
@@ -50,11 +57,15 @@ public class SecurityConfig {
         http
                 .securityMatcher("/admin/**")
                 .authenticationProvider(provider)
+                // 로그인 시도 자체가 처리되기 전에 IP부터 걸러낸다(꺼져 있으면 통과만 시킴).
+                .addFilterBefore(
+                        new AdminIpWhitelistFilter(adminIpWhitelistEntryRepository, adminIpWhitelistEnabled),
+                        UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(registry -> registry
                         .requestMatchers("/admin/login").permitAll()
-                        // 계정 관리·개인 여행 데이터 열람·통계는 최상위 관리자 전용.
+                        // 계정 관리·개인 여행 데이터 열람·통계·IP 화이트리스트는 최상위 관리자 전용.
                         // 모더레이터는 국가/지역 마스터 데이터 관리만 가능(아래 anyRequest로 허용).
-                        .requestMatchers("/admin/accounts/**", "/admin/trips/**", "/admin/stats/**")
+                        .requestMatchers("/admin/accounts/**", "/admin/trips/**", "/admin/stats/**", "/admin/ip-whitelist/**")
                         .hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form

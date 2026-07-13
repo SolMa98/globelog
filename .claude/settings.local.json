@@ -59,7 +59,12 @@
       "Bash(cp /tmp/commit-split2/application.properties.final /Users/cnai01/Documents/work/side/src/main/resources/application.properties)",
       "Bash(cp /tmp/commit-split2/README.md.final /Users/cnai01/Documents/work/side/README.md)",
       "Bash(cp /tmp/commit-split2/FileStorageService.java.final /Users/cnai01/Documents/work/side/src/main/java/kr/co/dh/globelog/file/FileStorageService.java)",
-      "Bash(cp /tmp/commit-split2/FileStorageServiceTest.java.final /Users/cnai01/Documents/work/side/src/test/java/kr/co/dh/globelog/file/FileStorageServiceTest.java)"
+      "Bash(cp /tmp/commit-split2/FileStorageServiceTest.java.final /Users/cnai01/Documents/work/side/src/test/java/kr/co/dh/globelog/file/FileStorageServiceTest.java)",
+      "Bash(kill 59242)",
+      "Bash(kill 29056)",
+      "Bash(ADMIN_IP_WHITELIST_ENABLED=true nohup ./gradlew bootRun --console=plain)",
+      "Bash(kill 30713)",
+      "Bash(grep *)"
     ]
   }
 }

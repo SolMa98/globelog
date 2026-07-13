@@ -12,7 +12,7 @@
   - Google / Naver / Kakao 간편 로그인
   - 실명 본인인증(PortOne, 다날 채널) — 1인당 계정 1개만 생성 가능하도록 가입 시점에 검증
   - 2차 인증(TOTP 인증 앱 / 이메일 코드), 계정별로 켜고 끌 수 있음
-- **관리자 백오피스**: 국가/지역/여행 마스터 데이터 관리(사용 여부 토글 포함), 계정 관리(최상위 관리자/모더레이터 권한 분리), 통계 대시보드(전체 사용자 합산 — 공개범위와 무관하게 집계되며, 개인별 통계는 아직 없음)
+- **관리자 백오피스**: 국가/지역/여행 마스터 데이터 관리(사용 여부 토글 포함), 계정 관리(최상위 관리자/모더레이터 권한 분리), 통계 대시보드(전체 사용자 합산 — 공개범위와 무관하게 집계되며, 개인별 통계는 아직 없음), IP 화이트리스트(선택, 기본 비활성)로 접근 제한
 - 라이트/다크 모드 (지구본·피드 화면은 의도적으로 다크 고정)
 
 ## 기술 스택
@@ -77,6 +77,7 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 | `SESSION_COOKIE_SECURE` | 세션 쿠키 Secure 속성 | HTTPS로 배포할 때만 `true`로 설정(로컬 HTTP 개발 중에 켜면 로그인이 깨짐, 기본값 `false`) |
 | `DB_USERNAME`, `DB_PASSWORD` | MariaDB 접속 계정 | 1단계에서 만든 계정/비밀번호가 기본값과 다르면 설정 |
 | `ADMIN_BOOTSTRAP_PASSWORD` | 최초 관리자 계정 비밀번호 | 기본값(`changeme123`) 대신 배포 전에 설정 권장 |
+| `ADMIN_IP_WHITELIST_ENABLED` | 관리자 IP 화이트리스트 켜기/끄기 | 기본값 `false`. 켜기 전 `/admin/ip-whitelist`에서 본인 IP를 먼저 등록할 것(아래 "관리자 IP 화이트리스트" 참고) |
 
 ## 파일 저장소
 
@@ -101,13 +102,23 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 | `APP_STORAGE_SCP_STRICT_HOST_KEY_CHECKING` | 미등록 호스트 거부 여부 | 기본값 `true`(권장). `false`로 끄면 MITM 방지가 사라지므로 known_hosts를 아직 준비 못 한 임시 상황에서만 사용 |
 | `APP_STORAGE_SCP_CONNECT_TIMEOUT_SECONDS` | 연결 타임아웃(초) | 기본값 10 |
 
+## 관리자 IP 화이트리스트
+
+관리자 백오피스(`/admin/**`, 로그인 화면 포함) 접근을 특정 IP/CIDR로 제한할 수 있습니다. 기본은 **비활성**입니다.
+
+- 목록은 DB(`admin_ip_whitelist` 테이블)로 관리하며, `/admin/ip-whitelist`(최상위 관리자 전용) 화면에서 추가/삭제
+- 켜고 끄는 스위치(`app.admin.ip-whitelist.enabled`)는 서버 재시작이 필요한 설정값으로 따로 둠 — 화이트리스트를 잘못 등록해 스스로 접근이 막히더라도, 이 값을 `false`로 되돌리고 재시작하면 즉시 복구할 수 있게 하기 위함
+- `127.0.0.1`/`::1`(loopback)은 화이트리스트 내용과 무관하게 항상 허용 — 서버에 직접 접속(SSH 등)할 수 있으면 항상 복구 가능
+- **켜기 전에 반드시** `/admin/ip-whitelist`에서 본인 IP(또는 대역)를 먼저 등록해두고 나서 `ADMIN_IP_WHITELIST_ENABLED=true`로 켤 것 — 순서를 반대로 하면 원격 서버 기준으로는 스스로 접근이 막힘
+- 리버스 프록시(Nginx 등) 뒤에 서버를 두는 경우, 필터는 `request.getRemoteAddr()`를 그대로 사용하므로 `server.forward-headers-strategy`를 설정해서 실제 클라이언트 IP가 전달되게 해야 함 — 프록시가 `X-Forwarded-For`를 검증/덮어쓰지 않으면 헤더 위조로 우회될 수 있으니 주의
+
 ## 테스트
 
 ```bash
 ./gradlew test
 ```
 
-암호화(AES-GCM 롤백/키 분리), 본인인증(중복가입 판정), 여행 소유권 체크, 파일 업로드 시그니처 검증, 관리자 강제 비밀번호 변경 등 보안에 직접 영향을 주는 로직 위주로 단위 테스트가 있습니다. SCP(SFTP) 저장소는 임베디드 SSH 테스트 서버를 띄워 store/load/delete와 known_hosts 미등록 호스트 거부까지 실제 핸드셰이크로 검증합니다.
+암호화(AES-GCM 롤백/키 분리), 본인인증(중복가입 판정), 여행 소유권 체크, 파일 업로드 시그니처 검증, 관리자 강제 비밀번호 변경, IP 화이트리스트 필터 등 보안에 직접 영향을 주는 로직 위주로 단위 테스트가 있습니다. SCP(SFTP) 저장소는 임베디드 SSH 테스트 서버를 띄워 store/load/delete와 known_hosts 미등록 호스트 거부까지 실제 핸드셰이크로 검증합니다.
 
 ## 프로젝트 구조
 
