@@ -31,14 +31,21 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
 
     private final SecretKeySpec key;
 
-    public EncryptedStringConverter(@Value("${app.crypto.secret-key}") String secretKey) {
+    public EncryptedStringConverter(@Value("${app.crypto.secret-key:}") String secretKey) {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException(
+                    "app.crypto.secret-key(APP_CRYPTO_SECRET_KEY 환경변수)가 설정되지 않았습니다. "
+                            + "예: openssl rand -base64 32 로 생성한 값을 채워주세요.");
+        }
         this.key = deriveKey(secretKey);
     }
 
+    // 같은 마스터 시크릿을 다른 목적(예: IdentityVerificationService의 DI 해시)에도 쓰므로,
+    // 컨텍스트 문자열을 섞어 목적별로 다른 키가 나오게 한다(키 재사용 방지).
     private static SecretKeySpec deriveKey(String secretKey) {
         try {
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-            byte[] keyBytes = sha256.digest(secretKey.getBytes(StandardCharsets.UTF_8));
+            byte[] keyBytes = sha256.digest((secretKey + "|field-encryption-aes-gcm").getBytes(StandardCharsets.UTF_8));
             return new SecretKeySpec(keyBytes, "AES");
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("암호화 키 생성 실패", e);

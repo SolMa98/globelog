@@ -34,19 +34,35 @@ CREATE USER 'globelog_app'@'localhost' IDENTIFIED BY 'globelog_app_pw';
 GRANT ALL PRIVILEGES ON globelog.* TO 'globelog_app'@'localhost';
 ```
 
-계정명/비밀번호가 다르다면 `src/main/resources/application.properties`의 `spring.datasource.*`를 맞춰 수정하세요.
+계정명/비밀번호가 다르다면 `DB_USERNAME`/`DB_PASSWORD` 환경변수로 덮어쓰세요(기본값은 위 SQL과 동일하게 `side_app`/`side_app_pw`로 맞춰져 있음).
 
-### 2. 실행
+### 2. 필수 환경변수
+
+`APP_CRYPTO_SECRET_KEY`는 기본값이 없습니다 — 값이 없으면(빈 문자열이면) `EncryptedStringConverter`가 기동 시점에 예외를 던지고 앱이 뜨지 않습니다. TOTP 시크릿 암호화와 본인인증 DI 해시에 쓰이는 마스터 키이므로, 안전하지 않은 기본값으로 조용히 동작하는 상황을 막기 위한 의도적인 제약입니다. 이 키가 바뀌면 그 전에 암호화해둔 값(TOTP 시크릿 등)은 복호화할 수 없게 되므로, 한 번 정한 값은 계속 유지해야 합니다.
+
+**로컬 개발(권장)**: 프로젝트 루트에 `local-secrets.properties` 파일을 만들어두면 서버가 자동으로 읽습니다(`.gitignore`에 등록돼 있어 커밋되지 않고, 매번 셸에 export할 필요도 없음).
+
+```bash
+echo "APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)" > local-secrets.properties
+```
+
+**운영/CI**: 파일 대신 실제 OS 환경변수로 주입합니다.
+
+```bash
+export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
+```
+
+### 3. 실행
 
 ```bash
 ./gradlew bootRun
 ```
 
 기본적으로 `http://localhost:8080`에서 서비스가 뜹니다. 첫 기동 시 다음이 자동으로 준비됩니다:
-- 관리자 계정 생성(계정: `admin` / 비밀번호: `changeme123`, `/admin/login`에서 로그인 후 반드시 변경하세요)
+- 관리자 계정 생성(계정: `admin` / 비밀번호: `changeme123`). 이 계정은 `must_change_password` 플래그가 켜진 채로 만들어져서, 최초 로그인 시 `/admin/change-password`로 강제 이동되고 비밀번호를 바꾸기 전까지는 다른 어드민 화면에 들어갈 수 없음(신규 관리자 계정을 추가로 만들 때도 동일하게 적용됨). 배포 시에는 `ADMIN_BOOTSTRAP_PASSWORD` 환경변수로 최초 비밀번호 자체도 바꿀 수 있음 — 단, 이미 계정이 생성된 이후에는 이 값을 바꿔도 기존 비밀번호에 영향 없음
 - 전세계 236개국 국가 마스터 데이터 자동 등록(`countries-ref.json` 기반, 이미 등록된 국가는 건드리지 않고 없는 것만 채움 — 재기동해도 안전)
 
-### 3. (선택) 외부 연동 환경변수
+### 4. (선택) 외부 연동 환경변수
 
 아래 값들이 없어도 앱은 정상적으로 기동됩니다 — 값이 없으면 해당 기능만 개별적으로 실패합니다(예: 소셜 로그인 버튼을 눌러도 provider가 거절, 인증 메일 발송 실패 로그만 남음).
 
@@ -57,8 +73,10 @@ GRANT ALL PRIVILEGES ON globelog.* TO 'globelog_app'@'localhost';
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 네이버 간편 로그인 | [네이버 개발자센터](https://developers.naver.com/) → 네이버 로그인 API, 리디렉션 URI: `{base-url}/login/oauth2/code/naver` |
 | `KAKAO_CLIENT_ID` | 카카오 간편 로그인 | [카카오 개발자센터](https://developers.kakao.com/) → 카카오 로그인 활성화 + 이메일 동의항목, 리디렉션 URI: `{base-url}/login/oauth2/code/kakao` |
 | `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`, `PORTONE_API_SECRET` | 회원가입 시 실명 본인인증(1인 1계정 검증) | [PortOne 콘솔](https://admin.portone.io) → 다날 본인인증 채널 연동. 실서비스 전환에는 PG 심사(사업자등록 등)가 필요할 수 있음 |
-| `APP_CRYPTO_SECRET_KEY` | TOTP 시크릿 등 민감정보 암호화 키 | 운영에서는 반드시 별도 값으로 교체(기본값 그대로 쓰지 말 것) |
 | `APP_BASE_URL` | 인증 메일 링크, OAuth 콜백 등에 쓰이는 서비스 base URL | 배포 도메인으로 설정(기본값 `http://localhost:8080`) |
+| `SESSION_COOKIE_SECURE` | 세션 쿠키 Secure 속성 | HTTPS로 배포할 때만 `true`로 설정(로컬 HTTP 개발 중에 켜면 로그인이 깨짐, 기본값 `false`) |
+| `DB_USERNAME`, `DB_PASSWORD` | MariaDB 접속 계정 | 1단계에서 만든 계정/비밀번호가 기본값과 다르면 설정 |
+| `ADMIN_BOOTSTRAP_PASSWORD` | 최초 관리자 계정 비밀번호 | 기본값(`changeme123`) 대신 배포 전에 설정 권장 |
 
 ## 프로젝트 구조
 

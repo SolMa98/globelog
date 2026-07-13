@@ -32,6 +32,12 @@ public class AdminAccount {
     @Column(name = "role", nullable = false, length = 20)
     private AdminRole role = AdminRole.SUPER_ADMIN;
 
+    // 부트스트랩 계정(기본값 changeme123)이나 다른 관리자가 대신 정해준 초기 비밀번호가
+    // 그대로 방치되는 걸 막기 위한 플래그 — 계정 생성 시 항상 true로 시작해서, 최초
+    // 로그인 후 본인이 비밀번호를 바꿔야만 그 외 화면에 접근할 수 있게 한다.
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -79,5 +85,14 @@ public class AdminAccount {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.mustChangePassword = false;
     }
 }

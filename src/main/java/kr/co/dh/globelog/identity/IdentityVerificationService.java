@@ -2,6 +2,7 @@ package kr.co.dh.globelog.identity;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -30,9 +31,10 @@ public class IdentityVerificationService {
 
     public IdentityVerificationService(
             UserRepository userRepository,
+            RestClient.Builder restClientBuilder,
             @Value("${portone.api-secret}") String apiSecret,
             @Value("${app.crypto.secret-key}") String hashKey) {
-        this.restClient = RestClient.builder().baseUrl("https://api.portone.io").build();
+        this.restClient = restClientBuilder.baseUrl("https://api.portone.io").build();
         this.userRepository = userRepository;
         this.apiSecret = apiSecret;
         this.hashKey = hashKey;
@@ -77,10 +79,15 @@ public class IdentityVerificationService {
         return new IdentityVerificationResult(diHash);
     }
 
+    // EncryptedStringConverter(AES 필드 암호화)와 같은 마스터 시크릿(app.crypto.secret-key)을
+    // 공유하므로, 컨텍스트 문자열로 서로 다른 키를 파생시켜 목적별 키 재사용을 피한다.
     private String hash(String value) {
         try {
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            byte[] purposeKey = sha256.digest((hashKey + "|identity-di-hash").getBytes(StandardCharsets.UTF_8));
+
             Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(hashKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            mac.init(new SecretKeySpec(purposeKey, "HmacSHA256"));
             byte[] digest = mac.doFinal(value.getBytes(StandardCharsets.UTF_8));
             StringBuilder hex = new StringBuilder(digest.length * 2);
             for (byte b : digest) {
