@@ -30,6 +30,8 @@ dependencies {
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     implementation 'com.google.zxing:core:3.5.3'
     implementation 'com.google.zxing:javase:3.5.3'
+    // SCP(SFTP) 원격 파일 저장소 — 순수 자바 SSH 클라이언트. sshd-sftp가 sshd-core를 전이 의존.
+    implementation 'org.apache.sshd:sshd-sftp:2.14.0'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'

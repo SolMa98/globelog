@@ -78,6 +78,37 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 | `DB_USERNAME`, `DB_PASSWORD` | MariaDB 접속 계정 | 1단계에서 만든 계정/비밀번호가 기본값과 다르면 설정 |
 | `ADMIN_BOOTSTRAP_PASSWORD` | 최초 관리자 계정 비밀번호 | 기본값(`changeme123`) 대신 배포 전에 설정 권장 |
 
+## 파일 저장소
+
+여행/게시글 이미지는 프로젝트 디렉터리 밖에 저장됩니다(재배포·git clean 등으로 업로드 파일이 함께 날아가지 않도록). `app.storage.mode`로 두 방식 중 하나를 고릅니다 — 저장뿐 아니라 조회(`/uploads/**`)와 삭제(게시글 삭제 시)도 항상 같은 방식을 따릅니다.
+
+- **LOCAL**(기본값): 서버 로컬 디스크의 `app.storage.local.base-dir`(기본 `${user.home}/globelog-uploads`)에 저장
+- **SCP**: SSH(SFTP)로 외부 서버의 `app.storage.scp.remote-dir`에 저장. `known_hosts`에 등록된 호스트만 신뢰하므로(`strict-host-key-checking=true`가 기본값), 연결 전에 `ssh-keyscan -H <host> >> ~/.ssh/known_hosts` 등으로 먼저 등록해야 함. 인증은 비밀번호/개인키 중 선택(`auth-method=PASSWORD|PRIVATE_KEY`)
+
+두 방식 모두 저장 경로는 `{project-name}/{년}/{월}/{일}/{UUID}.{확장자}` 구조로 자동 정리됩니다(예: `globelog/2026/07/13/9697c459-....jpg`).
+
+| 환경변수 | 용도 | 비고 |
+|---|---|---|
+| `APP_STORAGE_MODE` | `LOCAL` 또는 `SCP` | 기본값 `LOCAL` |
+| `APP_STORAGE_PROJECT_NAME` | 저장 경로 최상위 폴더명 | 기본값 `globelog` |
+| `APP_STORAGE_LOCAL_DIR` | LOCAL 모드 저장 경로 | 기본값 `${user.home}/globelog-uploads` |
+| `APP_STORAGE_SCP_HOST`, `APP_STORAGE_SCP_PORT`, `APP_STORAGE_SCP_USERNAME` | SCP 모드 접속 정보 | 포트 기본값 22 |
+| `APP_STORAGE_SCP_AUTH_METHOD` | `PASSWORD` 또는 `PRIVATE_KEY` | 기본값 `PASSWORD` |
+| `APP_STORAGE_SCP_PASSWORD` | 비밀번호 인증 시 사용 | `local-secrets.properties`에 두는 걸 권장 |
+| `APP_STORAGE_SCP_PRIVATE_KEY_PATH`, `APP_STORAGE_SCP_PRIVATE_KEY_PASSPHRASE` | 개인키 인증 시 사용 | 키 파일 자체는 서버에만 두고 경로만 지정 |
+| `APP_STORAGE_SCP_REMOTE_DIR` | 원격 저장 베이스 디렉터리 | 기본값 `/var/globelog/uploads` |
+| `APP_STORAGE_SCP_KNOWN_HOSTS_PATH` | known_hosts 파일 경로 | 기본값 `${user.home}/.ssh/known_hosts` |
+| `APP_STORAGE_SCP_STRICT_HOST_KEY_CHECKING` | 미등록 호스트 거부 여부 | 기본값 `true`(권장). `false`로 끄면 MITM 방지가 사라지므로 known_hosts를 아직 준비 못 한 임시 상황에서만 사용 |
+| `APP_STORAGE_SCP_CONNECT_TIMEOUT_SECONDS` | 연결 타임아웃(초) | 기본값 10 |
+
+## 테스트
+
+```bash
+./gradlew test
+```
+
+암호화(AES-GCM 롤백/키 분리), 본인인증(중복가입 판정), 여행 소유권 체크, 파일 업로드 시그니처 검증, 관리자 강제 비밀번호 변경 등 보안에 직접 영향을 주는 로직 위주로 단위 테스트가 있습니다. SCP(SFTP) 저장소는 임베디드 SSH 테스트 서버를 띄워 store/load/delete와 known_hosts 미등록 호스트 거부까지 실제 핸드셰이크로 검증합니다.
+
 ## 프로젝트 구조
 
 ```
@@ -85,7 +116,7 @@ src/main/java/kr/co/dh/globelog/
 ├── admin/       관리자 백오피스(국가/지역/여행/계정/통계)
 ├── api/         공개 API(지구본/지도/검색/피드)
 ├── domain/      JPA 엔티티·레포지토리
-├── file/        이미지 업로드
+├── file/        이미지 업로드(storage/ 하위에 LOCAL/SCP 저장소 구현)
 ├── identity/    실명 본인인증(PortOne)
 ├── mail/        메일 발송
 ├── mytrip/      셀프서비스 여행 CRUD(일반 사용자)

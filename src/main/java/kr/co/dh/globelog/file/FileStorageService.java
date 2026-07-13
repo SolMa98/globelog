@@ -3,12 +3,12 @@ package kr.co.dh.globelog.file;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
+import kr.co.dh.globelog.file.storage.FileStorage;
+import kr.co.dh.globelog.file.storage.FileStorageProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,19 +21,17 @@ public class FileStorageService {
     // 실제 시그니처(매직바이트)까지 대조해야 "확장자만 .jpg로 바꾼 임의 파일" 업로드를 막을 수 있다.
     private static final int SIGNATURE_CHECK_BYTES = 12;
 
-    private final Path uploadDir;
+    private final FileStorage fileStorage;
+    private final String projectName;
 
-    public FileStorageService(@Value("${app.upload-dir}") String uploadDir) {
-        this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(this.uploadDir);
-        } catch (IOException e) {
-            throw new UncheckedIOException("업로드 디렉터리를 생성할 수 없습니다: " + this.uploadDir, e);
-        }
+    public FileStorageService(FileStorage fileStorage, FileStorageProperties properties) {
+        this.fileStorage = fileStorage;
+        this.projectName = properties.projectName();
     }
 
     /**
-     * 이미지 파일을 검증 후 UUID 파일명으로 저장하고, /uploads/** 로 서빙될 상대 경로를 반환한다.
+     * 이미지 파일을 검증 후 "프로젝트명/년/월/일/UUID.확장자" 상대 경로로 저장하고,
+     * /uploads/** 로 서빙될 그 상대 경로를 반환한다.
      */
     public String store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -53,24 +51,33 @@ public class FileStorageService {
             throw new IllegalArgumentException("파일 내용이 확장자(" + extension + ")와 일치하지 않습니다.");
         }
 
-        String storedFilename = UUID.randomUUID() + "." + extension;
-        Path target = uploadDir.resolve(storedFilename);
-
-        try {
-            file.transferTo(target);
+        String relativePath = buildRelativePath(extension);
+        try (InputStream in = file.getInputStream()) {
+            fileStorage.store(in, relativePath);
         } catch (IOException e) {
             throw new UncheckedIOException("파일 저장에 실패했습니다.", e);
         }
 
-        return storedFilename;
+        return relativePath;
     }
 
-    public void delete(String storedFilename) {
+    public InputStream load(String relativePath) throws IOException {
+        return fileStorage.load(relativePath);
+    }
+
+    public void delete(String relativePath) {
         try {
-            Files.deleteIfExists(uploadDir.resolve(storedFilename));
+            fileStorage.delete(relativePath);
         } catch (IOException e) {
-            throw new UncheckedIOException("파일 삭제에 실패했습니다: " + storedFilename, e);
+            throw new UncheckedIOException("파일 삭제에 실패했습니다: " + relativePath, e);
         }
+    }
+
+    private String buildRelativePath(String extension) {
+        LocalDate today = LocalDate.now();
+        return "%s/%04d/%02d/%02d/%s.%s".formatted(
+                projectName, today.getYear(), today.getMonthValue(), today.getDayOfMonth(),
+                UUID.randomUUID(), extension);
     }
 
     private String extractExtension(String originalFilename) {

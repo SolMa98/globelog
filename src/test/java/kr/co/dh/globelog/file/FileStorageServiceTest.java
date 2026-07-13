@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import kr.co.dh.globelog.file.storage.FileStorageProperties;
+import kr.co.dh.globelog.file.storage.LocalFileStorage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,10 @@ class FileStorageServiceTest {
     @BeforeEach
     void setUp() throws IOException {
         tempDir = Files.createTempDirectory("globelog-upload-test");
-        fileStorageService = new FileStorageService(tempDir.toString());
+        FileStorageProperties properties = new FileStorageProperties(
+                FileStorageProperties.StorageMode.LOCAL, "globelog-test",
+                new FileStorageProperties.Local(tempDir.toString()), null);
+        fileStorageService = new FileStorageService(new LocalFileStorage(tempDir.toString()), properties);
     }
 
     @AfterEach
