@@ -1,5 +1,6 @@
 package kr.co.dh.globelog.api;
 
+import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.security.CurrentUserResolver;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -10,9 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MeApiController {
 
     private final CurrentUserResolver currentUserResolver;
+    private final TripRepository tripRepository;
 
-    public MeApiController(CurrentUserResolver currentUserResolver) {
+    public MeApiController(CurrentUserResolver currentUserResolver, TripRepository tripRepository) {
         this.currentUserResolver = currentUserResolver;
+        this.tripRepository = tripRepository;
     }
 
     // CsrfToken을 파라미터로 받아 실제로 참조해야 CsrfFilter가 토큰을 로드해서
@@ -24,7 +27,8 @@ public class MeApiController {
         String headerName = csrfToken.getHeaderName();
         String token = csrfToken.getToken();
         return currentUserResolver.resolve(authentication)
-                .map(u -> new MeResponse(true, u.getId(), u.getNickname(), u.getProfileImageUrl(), headerName, token))
-                .orElseGet(() -> new MeResponse(false, null, null, null, headerName, token));
+                .map(u -> new MeResponse(true, u.getId(), u.getNickname(), u.getProfileImageUrl(),
+                        tripRepository.countDistinctCountryByUserId(u.getId()), headerName, token))
+                .orElseGet(() -> new MeResponse(false, null, null, null, null, headerName, token));
     }
 }

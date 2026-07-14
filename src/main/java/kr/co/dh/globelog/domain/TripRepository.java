@@ -17,6 +17,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByUserIdOrderByVisitedDateDesc(Long userId);
 
+    // 피드 상단의 "방문 국가 수" 표시용 — 같은 국가에 여러 여행을 등록해도 1개국으로 센다.
+    @Query("SELECT COUNT(DISTINCT t.country.id) FROM Trip t WHERE t.user.id = :userId")
+    long countDistinctCountryByUserId(@Param("userId") Long userId);
+
     Page<Trip> findByRegionId(Long regionId, Pageable pageable);
 
     Page<Trip> findByCountryId(Long countryId, Pageable pageable);

@@ -727,6 +727,26 @@ html, body {
     margin: 0;
 }
 
+#visited-country-summary {
+    max-width: 640px;
+    margin: -12px auto 20px;
+    padding: 10px 16px;
+    background: rgba(79, 195, 222, 0.1);
+    border: 1px solid rgba(79, 195, 222, 0.22);
+    border-radius: 12px;
+    font-size: 13.5px;
+    color: #cfe9ee;
+}
+
+#visited-country-summary strong {
+    color: #4fc3de;
+    font-size: 15px;
+}
+
+#visited-country-summary.hidden {
+    display: none;
+}
+
 #feed-list {
     max-width: 640px;
     margin: 0 auto;

@@ -8,6 +8,7 @@
         .catch(function () {});
 
     function render(me) {
+        renderVisitedCountrySummary(me);
         accountBoxEl.innerHTML = '';
 
         // 지구본은 항상 특정 사용자 소유(/u/{nickname}/globe)라, 그 페이지에서는
@@ -65,6 +66,18 @@
         accountBoxEl.appendChild(securityLink);
         accountBoxEl.appendChild(document.createTextNode(' · '));
         accountBoxEl.appendChild(logoutBtn);
+    }
+
+    // 피드 페이지(index.html)에만 있는 요소라 다른 페이지에서는 그냥 조용히 스킵됨.
+    function renderVisitedCountrySummary(me) {
+        var summaryEl = document.getElementById('visited-country-summary');
+        if (!summaryEl) return;
+        if (!me.loggedIn || !me.visitedCountryCount) {
+            summaryEl.classList.add('hidden');
+            return;
+        }
+        document.getElementById('visited-country-count').textContent = me.visitedCountryCount;
+        summaryEl.classList.remove('hidden');
     }
 
     function logout(csrfHeaderName, csrfToken) {
