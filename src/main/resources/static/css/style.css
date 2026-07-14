@@ -150,6 +150,22 @@ html, body {
     box-shadow: 0 1px 4px rgba(0,0,0,.4);
 }
 
+#map-no-region-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    color: #e7e9ee;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+#map-no-region-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
 #map-container {
     flex: 1;
     position: relative;

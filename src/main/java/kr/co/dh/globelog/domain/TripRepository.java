@@ -11,6 +11,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByRegionIdOrderByVisitedDateAsc(Long regionId);
 
+    // 지역을 지정하지 않고 국가 단위로만 등록한 여행 — 스토리 보기(map.js)에서
+    // 지역 마커가 아닌 "국가 전체" 진입점으로 묶어서 보여줄 때 씀.
+    List<Trip> findByCountryIdAndRegionIsNullOrderByVisitedDateAsc(Long countryId);
+
     List<Trip> findByUserIdOrderByVisitedDateDesc(Long userId);
 
     Page<Trip> findByRegionId(Long regionId, Pageable pageable);

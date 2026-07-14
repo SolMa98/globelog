@@ -103,19 +103,8 @@ public class MyTripController {
             @RequestParam(defaultValue = "PUBLIC") TripVisibility visibility,
             Authentication authentication) {
         User viewer = requireLoggedIn(authentication);
-        Country country = countryRepository.findById(countryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "국가를 찾을 수 없습니다."));
-        if (!country.isEnabled()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "현재 여행을 등록할 수 없는 국가입니다.");
-        }
-        Region region = null;
-        if (regionId != null) {
-            region = regionRepository.findById(regionId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "지역을 찾을 수 없습니다."));
-            if (!region.isEnabled()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "현재 여행을 등록할 수 없는 지역입니다.");
-            }
-        }
+        Country country = resolveCountry(countryId);
+        Region region = resolveRegion(regionId);
         LocalDate parsedEndDate = (endDate == null || endDate.isBlank()) ? null : LocalDate.parse(endDate);
         Trip trip = new Trip(viewer, region, country, title,
                 LocalDate.parse(visitedDate), parsedEndDate, emptyToNull(description));
@@ -128,6 +117,8 @@ public class MyTripController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> update(
             @PathVariable Long id,
+            @RequestParam Long countryId,
+            @RequestParam(required = false) Long regionId,
             @RequestParam String title,
             @RequestParam String visitedDate,
             @RequestParam(required = false) String endDate,
@@ -135,6 +126,15 @@ public class MyTripController {
             @RequestParam(defaultValue = "PUBLIC") TripVisibility visibility,
             Authentication authentication) {
         Trip trip = findOwnedTripOrThrow(id, authentication);
+        Country country = resolveCountry(countryId);
+        Region region = resolveRegion(regionId);
+        // 지역은 반드시 그 국가에 속해야 함 — 국가만 바꾸고 지역 select를 못 갈아탄
+        // 클라이언트가 이전 국가의 지역 id를 그대로 보내는 실수를 서버에서 막는다.
+        if (region != null && !region.getCountry().getId().equals(country.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "선택한 지역이 해당 국가에 속하지 않습니다.");
+        }
+        trip.setCountry(country);
+        trip.setRegion(region);
         trip.setTitle(title);
         trip.setVisitedDate(LocalDate.parse(visitedDate));
         trip.setEndDate((endDate == null || endDate.isBlank()) ? null : LocalDate.parse(endDate));
@@ -203,6 +203,27 @@ public class MyTripController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 소유 여행만 관리할 수 있습니다.");
         }
         return trip;
+    }
+
+    private Country resolveCountry(Long countryId) {
+        Country country = countryRepository.findById(countryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "국가를 찾을 수 없습니다."));
+        if (!country.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "현재 여행을 등록할 수 없는 국가입니다.");
+        }
+        return country;
+    }
+
+    private Region resolveRegion(Long regionId) {
+        if (regionId == null) {
+            return null;
+        }
+        Region region = regionRepository.findById(regionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "지역을 찾을 수 없습니다."));
+        if (!region.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "현재 여행을 등록할 수 없는 지역입니다.");
+        }
+        return region;
     }
 
     private static String emptyToNull(String s) {

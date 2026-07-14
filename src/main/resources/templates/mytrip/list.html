@@ -124,12 +124,21 @@
             <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
         </div>
         <div class="modal-body">
-            <p class="modal-section-title">
-                <span class="badge js-trip-country"></span>
-                <span class="muted js-trip-region" style="margin-left:6px"></span>
-            </p>
             <form id="trip-edit-form" class="js-trip-edit-form">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>
+                    국가
+                    <select name="countryId" id="edit-country" required>
+                        <option value="">국가 선택</option>
+                        <option th:each="c : ${countries}" th:value="${c.id}" th:text="${c.nameKo}"></option>
+                    </select>
+                </label>
+                <label>
+                    지역 <span class="muted" style="font-weight:400;font-size:12px">(선택 사항)</span>
+                    <select name="regionId" id="edit-region">
+                        <option value="">지역 선택</option>
+                    </select>
+                </label>
                 <label>
                     여행 제목
                     <input type="text" name="title" required>

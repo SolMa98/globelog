@@ -90,7 +90,9 @@ public class Trip {
     public Long getId() { return id; }
     public User getUser() { return user; }
     public Region getRegion() { return region; }
+    public void setRegion(Region region) { this.region = region; }
     public Country getCountry() { return country; }
+    public void setCountry(Country country) { this.country = country; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public LocalDate getVisitedDate() { return visitedDate; }

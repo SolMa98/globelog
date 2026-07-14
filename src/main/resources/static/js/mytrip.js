@@ -38,9 +38,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var createCountrySelect = document.getElementById('create-country');
     var createRegionSelect = document.getElementById('create-region');
+    var editCountrySelect = document.getElementById('edit-country');
+    var editRegionSelect = document.getElementById('edit-region');
 
-    function loadRegionOptions(countryId) {
-        createRegionSelect.innerHTML = '<option value="">지역 선택 (선택 사항)</option>';
+    // countryId가 바뀔 때(등록/수정 공통) 그 국가의 지역 목록으로 select를 다시 채운다.
+    // preselectRegionId를 주면(수정 화면이 기존 값을 불러올 때) 목록이 로드된 뒤 그 값을 선택해둔다.
+    function loadRegionOptions(regionSelectEl, countryId, preselectRegionId) {
+        regionSelectEl.innerHTML = '<option value="">지역 선택 (선택 사항)</option>';
         if (!countryId) return;
         fetch('/my/trips/regions?countryId=' + encodeURIComponent(countryId))
             .then(function (res) { return res.json(); })
@@ -49,15 +53,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     var opt = document.createElement('option');
                     opt.value = region.id;
                     opt.textContent = region.nameKo;
-                    createRegionSelect.appendChild(opt);
+                    regionSelectEl.appendChild(opt);
                 });
+                if (preselectRegionId) regionSelectEl.value = preselectRegionId;
             })
             .catch(function () {});
     }
 
     if (createCountrySelect) {
         createCountrySelect.addEventListener('change', function () {
-            loadRegionOptions(createCountrySelect.value);
+            loadRegionOptions(createRegionSelect, createCountrySelect.value);
+        });
+    }
+
+    if (editCountrySelect) {
+        editCountrySelect.addEventListener('change', function () {
+            loadRegionOptions(editRegionSelect, editCountrySelect.value);
+        });
+    }
+
+    // 국가 236개를 그냥 <select>로 두면 스크롤이 끔찍해서, 등록/수정 화면 둘 다
+    // 검색 가능한 TomSelect로 감싼다. 모달을 열 때마다 다시 만드는 이유는 이전에 남은
+    // tomselect 인스턴스가 있으면(수정→등록처럼 모달을 번갈아 열 때) 중복 초기화 에러가 나서.
+    function initCountryTomSelect(selectEl) {
+        if (!selectEl || typeof TomSelect === 'undefined') return;
+        if (selectEl.tomselect) selectEl.tomselect.destroy();
+        new TomSelect(selectEl, {
+            maxOptions: null,
+            allowEmptyOption: true,
+            create: false,
+            sortField: false,
+            dropdownParent: 'body',
+            render: {
+                no_results: function () {
+                    return '<div class="no-results">검색 결과가 없습니다.</div>';
+                }
+            }
         });
     }
 
@@ -71,21 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
             createVisitedDate.value = '';
             createEndDate.value = '';
             if (createRegionSelect) createRegionSelect.innerHTML = '<option value="">지역 선택 (선택 사항)</option>';
-            if (createCountrySelect && typeof TomSelect !== 'undefined') {
-                if (createCountrySelect.tomselect) createCountrySelect.tomselect.destroy();
-                new TomSelect(createCountrySelect, {
-                    maxOptions: null,
-                    allowEmptyOption: true,
-                    create: false,
-                    sortField: false,
-                    dropdownParent: 'body',
-                    render: {
-                        no_results: function () {
-                            return '<div class="no-results">검색 결과가 없습니다.</div>';
-                        }
-                    }
-                });
-            }
+            initCountryTomSelect(createCountrySelect);
             initRangePicker(createDateRangeInput, createVisitedDate, createEndDate, null);
             AdminModal.open(createModal);
         });
@@ -121,8 +138,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var imageEmpty = editModal.querySelector('.js-image-empty');
     var imageUploadForm = editModal.querySelector('.js-image-upload-form');
     var deleteForm = editModal.querySelector('.js-trip-delete-form');
-    var tripCountryEl = editModal.querySelector('.js-trip-country');
-    var tripRegionEl = editModal.querySelector('.js-trip-region');
     var currentId = null;
 
     function renderImages(images) {
@@ -164,8 +179,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     editForm.action = '/my/trips/' + trip.id;
                     imageUploadForm.action = '/my/trips/' + trip.id + '/images';
                     deleteForm.action = '/my/trips/' + trip.id + '/delete';
-                    tripCountryEl.textContent = trip.countryNameKo;
-                    tripRegionEl.textContent = trip.regionNameKo ? '› ' + trip.regionNameKo : '';
+                    editCountrySelect.value = trip.countryId;
+                    initCountryTomSelect(editCountrySelect);
+                    loadRegionOptions(editRegionSelect, trip.countryId, trip.regionId);
                     editForm.querySelector('[name=title]').value = trip.title;
                     editForm.querySelector('[name=description]').value = trip.description || '';
                     editVisibility.value = trip.visibility;

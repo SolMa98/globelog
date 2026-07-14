@@ -2,6 +2,8 @@
     var map = null;
     var regionMarkers = [];
     var currentOwnerNickname = null; // 지금 보고 있는 지구본의 소유자 — country/region/trip API 호출마다 실어보냄
+    var currentCountryIsoA3 = null; // "지역 미지정 여행" 버튼 클릭 시 어느 국가 기준인지 알아야 해서 저장
+    var currentCountryNameKo = null;
 
     // ── 언어 설정 ─────────────────────────────────────────────
     var LANG_STORAGE_KEY = 'map-lang';
@@ -23,6 +25,8 @@
     var mapCountryNameEl       = document.getElementById('map-country-name');
     var mapFlagEl              = document.getElementById('map-flag');
     var mapBackBtn             = document.getElementById('map-back-btn');
+    var mapNoRegionBtnEl       = document.getElementById('map-no-region-btn');
+    var mapNoRegionCountEl     = document.getElementById('map-no-region-count');
     var mapTileLoadingEl       = document.getElementById('map-tile-loading');
     var mapLangToggleEl        = document.getElementById('map-lang-toggle');
     var storyViewEl            = document.getElementById('story-view');
@@ -256,39 +260,87 @@
     // ── 지도 뷰 열기 ─────────────────────────────────────────
     async function openMapView(isoA3, nameKo, polygons, centroid, openOptions, ownerNickname) {
         currentOwnerNickname = ownerNickname;
+        currentCountryIsoA3 = isoA3;
+        currentCountryNameKo = nameKo;
         globeViewEl.classList.add('hidden');
         mapViewEl.classList.remove('hidden');
+        mapCountryNameEl.textContent = nameKo;
+        mapFlagEl.style.display = 'none';
+        mapNoRegionBtnEl.classList.add('hidden');
+        closeStory();
+        clearRegionMarkers();
 
         initMap();
+        setTimeout(function () { map.resize(); }, 50);
+        // 카메라 이동(포커스)은 스타일 로딩과 무관한 순수 카메라 조작이라 바로 실행—
+        // 예전엔 이것도 아래 onMapReady 안에 있어서, 타일 서버 응답이 늦으면 국가가
+        // 화면 중앙(이전 뷰 위치)에 그대로 남아 "포커스가 안 된 것처럼" 보이는 문제가 있었다.
+        fitCountryBounds(polygons, centroid);
 
-        async function onReady() {
-            setTimeout(function () { map.resize(); }, 50);
-            mapCountryNameEl.textContent = nameKo;
-            mapFlagEl.style.display = 'none';
-
-            clearRegionMarkers();
+        // addSource/addLayer가 필요한 마스크·국경선만 2D 지도 스타일이 다 로드된 뒤로
+        // 미룬다(안 그러면 "Style is not done loading" 예외). 지역 마커·국기·스토리·카메라
+        // 이동은 전부 스타일/외부 타일 로딩과 무관하게 map 인스턴스만 있으면 바로 가능하다.
+        var overlaysDrawn = false;
+        function drawOverlaysOnce() {
+            if (overlaysDrawn) return;
+            overlaysDrawn = true;
             clearMapOverlays();
-            closeStory();
-
-            fitCountryBounds(polygons, centroid);
             addCountryMask(polygons);
             addCountryBoundary(polygons);
-
-            loadCountryDetail(isoA3);
-
-            var regions = await loadRegionMarkers(isoA3);
-            if (openOptions && openOptions.openRegionId) {
-                var target = regions.find(function (r) { return r.id === openOptions.openRegionId; });
-                if (target) {
-                    await openStory(target, openOptions.openTripId);
-                }
-            }
         }
 
         if (map.isStyleLoaded()) {
-            onReady();
+            drawOverlaysOnce();
         } else {
-            map.once('load', onReady);
+            // 'load'는 지도 인스턴스 생애주기에서 딱 한 번만 발생하는 이벤트라, 이 시점
+            // 이전에 이미 지나가버렸는데 isStyleLoaded()가 아직 false를 반환하는 경계
+            // 상황이면 once('load', ...)가 영원히 안 불릴 수 있다 — 'idle'(렌더링이
+            // 안정될 때마다 반복 발생)을 안전망으로 같이 걸어서, 둘 중 먼저 오는 쪽이
+            // 그리고 나머지는 가드 플래그로 무시되게 한다.
+            map.once('load', drawOverlaysOnce);
+            map.once('idle', drawOverlaysOnce);
+        }
+
+        loadCountryDetail(isoA3);
+        var regions = await loadRegionMarkers(isoA3);
+        var noRegionCount = await refreshNoRegionEntry(isoA3);
+
+        if (openOptions && openOptions.openTripId) {
+            // 검색 결과처럼 어느 지역인지 이미 아는 경우엔 그대로 쓰고, 피드처럼
+            // 지역 정보 없이 tripId만 들어온 경우엔 그 여행이 실제로 어느
+            // 지역(또는 지역 없음)인지부터 서버에 물어봐야 한다.
+            var regionId = openOptions.openRegionId || await fetchTripRegionId(openOptions.openTripId);
+            if (regionId) {
+                var target = regions.find(function (r) { return r.id === regionId; });
+                if (target) await openStory(target, openOptions.openTripId);
+            } else if (noRegionCount > 0) {
+                await openStory({ countryIsoA3: isoA3, nameKo: nameKo }, openOptions.openTripId);
+            }
+        }
+    }
+
+    // 지역을 지정하지 않고 국가 단위로만 등록한 여행이 있으면 버튼을 보여준다.
+    async function refreshNoRegionEntry(isoA3) {
+        try {
+            var res = await fetch('/api/countries/' + isoA3 + '/trips?owner=' + encodeURIComponent(currentOwnerNickname));
+            var trips = res.ok ? await res.json() : [];
+            mapNoRegionCountEl.textContent = trips.length;
+            mapNoRegionBtnEl.classList.toggle('hidden', trips.length === 0);
+            return trips.length;
+        } catch (e) {
+            mapNoRegionBtnEl.classList.add('hidden');
+            return 0;
+        }
+    }
+
+    async function fetchTripRegionId(tripId) {
+        try {
+            var res = await fetch('/api/trips/' + tripId + '?owner=' + encodeURIComponent(currentOwnerNickname));
+            if (!res.ok) return null;
+            var detail = await res.json();
+            return detail.regionId || null;
+        } catch (e) {
+            return null;
         }
     }
 
@@ -302,11 +354,18 @@
         } catch (e) {}
     }
 
-    async function loadRegionMarkers(isoA3) {
+    // 순수 REST 조회만(지도 필요 없음) — 스토리를 열지 판단하는 로직이 2D 지도 스타일/타일
+    // 로딩과 무관하게 즉시 쓸 수 있도록 마커 추가와 분리해뒀다.
+    async function fetchRegions(isoA3) {
         try {
             var res = await fetch('/api/countries/' + isoA3 + '/regions?owner=' + encodeURIComponent(currentOwnerNickname));
-            if (!res.ok) return [];
-            var regions = await res.json();
+            return res.ok ? await res.json() : [];
+        } catch (e) { return []; }
+    }
+
+    async function loadRegionMarkers(isoA3) {
+        try {
+            var regions = await fetchRegions(isoA3);
             regions.forEach(function (region) {
                 if (region.centerLat == null || region.centerLng == null) return;
 
@@ -338,10 +397,13 @@
     }
 
     // ── 여행 스토리 ───────────────────────────────────────────
-    // 지역의 방문 기록을 인스타그램 스토리처럼 사진 중심 풀스크린 슬라이드로 보여준다.
-    // 사진이 여러 장인 방문은 사진 수만큼 슬라이드로 쪼개고(각 슬라이드에 같은 설명을
-    // 반복 표시), 사진이 없는 방문은 그라디언트 배경의 슬라이드 1장으로 대체한다.
-    async function openStory(region, focusTripId) {
+    // 지역(또는 지역 미지정 국가 단위)의 방문 기록을 인스타그램 스토리처럼 사진 중심
+    // 풀스크린 슬라이드로 보여준다. 사진이 여러 장인 방문은 사진 수만큼 슬라이드로
+    // 쪼개고(각 슬라이드에 같은 설명을 반복 표시), 사진이 없는 방문은 그라디언트
+    // 배경의 슬라이드 1장으로 대체한다.
+    // source: 지역 마커에서 왔으면 {id, nameKo}, "지역 미지정" 진입점이면
+    // {countryIsoA3, nameKo} — buildSlide는 source.nameKo만 쓰므로 이름은 공용.
+    async function openStory(source, focusTripId) {
         clearAutoTimer();
         storyPaused = false;
         storySlides = [];
@@ -356,7 +418,10 @@
 
         try {
             var ownerParam = 'owner=' + encodeURIComponent(currentOwnerNickname);
-            var listRes = await fetch('/api/regions/' + region.id + '/trips?' + ownerParam);
+            var listUrl = source.id
+                ? '/api/regions/' + source.id + '/trips?' + ownerParam
+                : '/api/countries/' + source.countryIsoA3 + '/trips?' + ownerParam;
+            var listRes = await fetch(listUrl);
             var trips = listRes.ok ? await listRes.json() : [];
 
             var details = await Promise.all(trips.map(function (trip) {
@@ -371,10 +436,10 @@
                 var images = (detail && detail.images) ? detail.images : [];
                 var firstSlideIndex = storySlides.length;
                 if (images.length === 0) {
-                    storySlides.push(buildSlide(region, trip, description, null, 1, 1));
+                    storySlides.push(buildSlide(source, trip, description, null, 1, 1));
                 } else {
                     images.forEach(function (img, photoIndex) {
-                        storySlides.push(buildSlide(region, trip, description, img.url, photoIndex + 1, images.length));
+                        storySlides.push(buildSlide(source, trip, description, img.url, photoIndex + 1, images.length));
                     });
                 }
                 storyTripEntries.push({
@@ -622,6 +687,9 @@
 
     // ── 이벤트 바인딩 ────────────────────────────────────────
     mapBackBtn.addEventListener('click', closeMapView);
+    mapNoRegionBtnEl.addEventListener('click', function () {
+        openStory({ countryIsoA3: currentCountryIsoA3, nameKo: currentCountryNameKo });
+    });
     storyCloseEl.addEventListener('click', closeStory);
     storyJumpToggleEl.addEventListener('click', openJumpList);
     storyJumpCloseEl.addEventListener('click', closeJumpList);

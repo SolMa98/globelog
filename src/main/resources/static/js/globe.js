@@ -160,6 +160,20 @@
         loadingEl.classList.add('hidden');
         bindInteractions();
         bindSearch();
+        handleDeepLink();
+    }
+
+    // 피드 카드 클릭(feed.js)이 ?tripId=&iso= 쿼리로 넘어온 경우, 도착하자마자 해당
+    // 게시글의 스토리를 자동으로 연다 — 그냥 지구본만 보여주면 어떤 글을 눌렀는지 알 수
+    // 없어서 "게시글 내용이 안 보인다"는 혼란이 있었음.
+    function handleDeepLink() {
+        var params = new URLSearchParams(window.location.search);
+        var tripId = params.get('tripId');
+        var iso = params.get('iso');
+        if (!tripId || !iso) return;
+        var info = countryInfoByIso.get(iso.toUpperCase());
+        if (!info) return;
+        focusOnCountry(info, { openTripId: Number(tripId) });
     }
 
     // ── 언어 적용 (map.js의 applyLanguage와 동일한 방식) ──
