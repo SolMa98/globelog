@@ -20,7 +20,34 @@
     <p id="feed-empty" class="hidden">아직 피드에 표시할 게시글이 없습니다.</p>
 </div>
 
+<nav id="bottom-nav">
+    <a href="/" class="bn-item active"><span class="bn-icon bn-icon-feed"></span>피드</a>
+    <a href="/login" id="bn-globe" class="bn-item"><span class="bn-icon bn-icon-globe"></span>지구본</a>
+    <a href="/login" id="bn-trips" class="bn-item"><span class="bn-icon bn-icon-trips"></span>내 여행</a>
+    <a href="/login" id="bn-profile" class="bn-item"><span class="bn-icon bn-icon-profile"></span>프로필</a>
+</nav>
+
 <script src="/js/auth.js"></script>
 <script src="/js/feed.js"></script>
+<script>
+(function () {
+    // 하단 네비게이션의 "지구본"/"내 여행"/"프로필" 링크는 로그인한 사용자에게만
+    // 실제 목적지를 알 수 있으므로(내 지구본 = /u/{nickname}/globe 등), auth.js와
+    // 동일한 /api/me 응답을 한 번 더 읽어 href를 채워준다.
+    fetch('/api/me')
+        .then(function (res) { return res.json(); })
+        .then(function (me) {
+            var globeLink = document.getElementById('bn-globe');
+            var tripsLink = document.getElementById('bn-trips');
+            var profileLink = document.getElementById('bn-profile');
+            if (me.loggedIn) {
+                globeLink.href = '/u/' + encodeURIComponent(me.nickname) + '/globe';
+                tripsLink.href = '/my/trips';
+                profileLink.href = '/u/' + encodeURIComponent(me.nickname);
+            }
+        })
+        .catch(function () {});
+})();
+</script>
 </body>
 </html>

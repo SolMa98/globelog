@@ -1,20 +1,22 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css');
+
 :root {
-    --accent: #2f6feb;
-    --accent-dark: #2657c2;
-    --accent-light: rgba(47, 111, 235, 0.1);
+    --accent: #1f8fa6;
+    --accent-dark: #15707f;
+    --accent-light: rgba(31, 143, 166, 0.1);
     --success: #1ea672;
     --success-dark: #168758;
     --danger: #ef4444;
     --danger-dark: #c8311f;
-    --bg: #f4f6fb;
+    --bg: #f5f4f0;
     --surface: #ffffff;
-    --text: #1b2030;
+    --text: #181b22;
     --muted: #7b8195;
-    --border: #e4e7f0;
-    --radius: 10px;
-    --radius-sm: 6px;
+    --border: #e6e5e0;
+    --radius: 14px;
+    --radius-sm: 8px;
     --radius-pill: 999px;
-    --shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 2px 8px rgba(16, 24, 40, 0.04);
+    --shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 20px rgba(16, 24, 40, 0.05);
     --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
     --snb-main-w: 56px;
     --snb-sub-w: 186px;
@@ -43,36 +45,37 @@
 
 /* ── 다크 테마 ─────────────────────────────────────────── */
 [data-theme="dark"] {
-    --bg: #111827;
-    --surface: #1e2840;
-    --surface-raised: #263352;
+    --accent: #4fc3de;
+    --bg: #070a11;
+    --surface: #10151f;
+    --surface-raised: #161c28;
     --hover-bg: rgba(255, 255, 255, 0.05);
-    --text: #e2e8f0;
-    --muted: #8892a4;
-    --border: rgba(255, 255, 255, 0.09);
-    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
-    --accent-light: rgba(47, 111, 235, 0.2);
-    --accent-dark: #93b8fc;
-    --badge-bg: rgba(47, 111, 235, 0.25);
+    --text: #eef1f6;
+    --muted: #9aa3b2;
+    --border: rgba(255, 255, 255, 0.08);
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 12px 28px rgba(0,0,0,0.35);
+    --accent-light: rgba(79, 195, 222, 0.16);
+    --accent-dark: #8fe0f0;
+    --badge-bg: rgba(79, 195, 222, 0.2);
     /* 사이드바 다크 모드 */
-    --sidebar-bg: #0f1623;
-    --sidebar-sub-bg: #161e2f;
+    --sidebar-bg: #05070d;
+    --sidebar-sub-bg: #0b0f18;
     --sidebar-border: rgba(255, 255, 255, 0.07);
     --snb-icon: rgba(255, 255, 255, 0.45);
     --snb-icon-hover: #fff;
     --snb-icon-hover-bg: rgba(255, 255, 255, 0.07);
     --snb-icon-active: #fff;
-    --snb-icon-active-bg: rgba(47, 111, 235, 0.18);
+    --snb-icon-active-bg: rgba(79, 195, 222, 0.18);
     --snb-link: rgba(255, 255, 255, 0.6);
     --snb-link-hover: #fff;
     --snb-link-hover-bg: rgba(255, 255, 255, 0.07);
     --snb-link-active: #fff;
-    --snb-link-active-bg: rgba(47, 111, 235, 0.18);
+    --snb-link-active-bg: rgba(79, 195, 222, 0.18);
     --snb-title-color: rgba(255, 255, 255, 0.35);
     --snb-logo-color: #fff;
-    --snb-username: #e8eaf0;
+    --snb-username: #eef1f6;
     --snb-role-color: rgba(255, 255, 255, 0.35);
-    --snb-tooltip-bg: #1e2840;
+    --snb-tooltip-bg: #10151f;
     --snb-tooltip-text: #fff;
 }
 
@@ -96,7 +99,7 @@
 }
 
 body {
-    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-family: "Pretendard Variable", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     margin: 0;
     color: var(--text);
     background: var(--bg);
@@ -405,7 +408,7 @@ a:hover {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent) 0%, #6c4fc2 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, #1c6e82 100%);
     display: flex;
     align-items: center;
     justify-content: center;
