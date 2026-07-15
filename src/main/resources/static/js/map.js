@@ -434,12 +434,13 @@
                 var detail = details[i];
                 var description = detail ? (detail.description || '') : '';
                 var images = (detail && detail.images) ? detail.images : [];
+                var viewCount = detail ? detail.viewCount : trip.viewCount;
                 var firstSlideIndex = storySlides.length;
                 if (images.length === 0) {
-                    storySlides.push(buildSlide(source, trip, description, null, 1, 1));
+                    storySlides.push(buildSlide(source, trip, description, null, 1, 1, viewCount));
                 } else {
                     images.forEach(function (img, photoIndex) {
-                        storySlides.push(buildSlide(source, trip, description, img.url, photoIndex + 1, images.length));
+                        storySlides.push(buildSlide(source, trip, description, img.url, photoIndex + 1, images.length, viewCount));
                     });
                 }
                 storyTripEntries.push({
@@ -480,7 +481,7 @@
         renderStorySlide(startIndex);
     }
 
-    function buildSlide(region, trip, description, imageUrl, photoIndex, photoCount) {
+    function buildSlide(region, trip, description, imageUrl, photoIndex, photoCount, viewCount) {
         return {
             tripId: trip.id,
             regionNameKo: region.nameKo,
@@ -490,7 +491,8 @@
             description: description,
             imageUrl: imageUrl,
             photoIndex: photoIndex,
-            photoCount: photoCount
+            photoCount: photoCount,
+            viewCount: viewCount
         };
     }
 
@@ -506,7 +508,20 @@
         });
         storyCurrentFillEl = fills[storyIndex] || null;
         storyPaused = false;
-        startAutoAdvance();
+
+        // 마지막 슬라이드는 자동 넘길 다음 슬라이드가 없으므로 자동재생을 걸지 않는다
+        // (예전엔 여기서 타이머가 끝나면 스토리 자체가 자동으로 닫혀서, 다 읽기도 전에
+        // 갑자기 화면이 꺼지는 것처럼 느껴진다는 불만이 있었다). 진행바만 다 찬 채로
+        // 멈춰 있고, 닫는 건 사용자가 닫기 버튼을 눌러야만 일어난다.
+        if (storyIndex >= storySlides.length - 1) {
+            clearAutoTimer();
+            if (storyCurrentFillEl) {
+                storyCurrentFillEl.style.transition = 'none';
+                storyCurrentFillEl.style.width = '100%';
+            }
+        } else {
+            startAutoAdvance();
+        }
 
         if (slide.imageUrl) {
             storyMediaEl.classList.remove('story-media-empty');
@@ -520,8 +535,41 @@
         storyVisitBadgeEl.textContent = slide.visitNumber + '번째 방문'
             + (slide.photoCount > 1 ? ' · ' + slide.photoIndex + '/' + slide.photoCount : '');
         storyTitleEl.textContent = slide.title || '(제목 없음)';
-        storyDateEl.textContent = slide.visitedDate || '';
+        storyDateEl.textContent = [slide.visitedDate, '조회 ' + (slide.viewCount || 0)].filter(Boolean).join(' · ');
         storyDescriptionEl.textContent = slide.description;
+
+        registerView(slide.tripId);
+    }
+
+    // 같은 게시글을 여러 번 열어도(사진이 여러 장이라 슬라이드를 오가는 경우 포함)
+    // 하루에 한 번만 조회수를 올린다 — 서버가 아니라 클라이언트 localStorage로
+    // 가볍게 절충한 것(project_trip_view_count_and_feed_filters 메모리 참고).
+    function registerView(tripId) {
+        if (!tripId) return;
+        var key = 'globelog-viewed-' + tripId;
+        var today = new Date().toISOString().slice(0, 10);
+        if (localStorage.getItem(key) === today) return;
+        fetchCsrf().then(function (csrf) {
+            var headers = {};
+            if (csrf) headers[csrf.headerName] = csrf.token;
+            return fetch('/api/trips/' + tripId + '/view', { method: 'POST', headers: headers });
+        }).then(function () { localStorage.setItem(key, today); })
+            .catch(function () {});
+    }
+
+    // 쿠키(XSRF-TOKEN)에 든 원본 토큰 값을 그대로 헤더에 넣으면 안 된다 — Spring
+    // Security 6 기본 핸들러(XorCsrfTokenRequestAttributeHandler)는 응답 바디로
+    // 내려준 "마스킹된" 토큰만 유효하게 검증한다(쿠키 원본 값은 403). auth.js 등
+    // 다른 화면과 동일하게 /api/me 응답의 csrfToken을 써야 한다.
+    var csrfPromise = null;
+    function fetchCsrf() {
+        if (!csrfPromise) {
+            csrfPromise = fetch('/api/me')
+                .then(function (res) { return res.json(); })
+                .then(function (me) { return { headerName: me.csrfHeaderName, token: me.csrfToken }; })
+                .catch(function () { csrfPromise = null; return null; });
+        }
+        return csrfPromise;
     }
 
     // ── 게시글 목록으로 바로 점프 ──────────────────────────────

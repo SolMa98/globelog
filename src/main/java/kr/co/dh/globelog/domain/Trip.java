@@ -66,6 +66,12 @@ public class Trip {
     @Column(name = "priority", nullable = false)
     private int priority = 0;
 
+    // 여행 스토리를 연 횟수. 정교한 중복집계 방지(로그인/IP 기반 등)는 하지 않고,
+    // 클라이언트가 localStorage로 하루 1회만 조회 API를 호출하도록 절충함
+    // (project_trip_view_count_and_feed_filters 메모리 참고).
+    @Column(name = "view_count", nullable = false)
+    private long viewCount = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -105,6 +111,8 @@ public class Trip {
     public void setVisibility(TripVisibility visibility) { this.visibility = visibility; }
     public int getPriority() { return priority; }
     public void setPriority(int priority) { this.priority = priority; }
+    public long getViewCount() { return viewCount; }
+    public void incrementViewCount() { this.viewCount++; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

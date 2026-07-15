@@ -71,11 +71,21 @@
         titleEl.textContent = post.title;
         body.appendChild(titleEl);
 
+        var footerEl = document.createElement('div');
+        footerEl.className = 'feed-card-footer';
+
         var authorEl = document.createElement('a');
         authorEl.className = 'feed-card-author';
         authorEl.href = '/u/' + encodeURIComponent(post.authorNickname);
         authorEl.textContent = '@' + post.authorNickname;
-        body.appendChild(authorEl);
+        footerEl.appendChild(authorEl);
+
+        var viewsEl = document.createElement('span');
+        viewsEl.className = 'feed-card-views';
+        viewsEl.textContent = '조회 ' + (post.viewCount || 0);
+        footerEl.appendChild(viewsEl);
+
+        body.appendChild(footerEl);
 
         card.appendChild(body);
         return card;

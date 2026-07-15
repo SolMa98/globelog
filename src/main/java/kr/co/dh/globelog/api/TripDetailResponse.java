@@ -11,6 +11,7 @@ public record TripDetailResponse(
         LocalDate visitedDate,
         String description,
         int visitNumber,
+        long viewCount,
         List<TripImageResponse> images) {
 
     public static TripDetailResponse from(Trip trip, Long regionId, int visitNumber, List<TripImageResponse> images) {
@@ -21,6 +22,7 @@ public record TripDetailResponse(
                 trip.getVisitedDate(),
                 trip.getDescription(),
                 visitNumber,
+                trip.getViewCount(),
                 images);
     }
 }

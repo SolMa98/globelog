@@ -14,7 +14,8 @@ public record FeedPostResponse(
         String regionNameKo,
         String countryIsoA3,
         String countryIsoA2,
-        String countryNameKo) {
+        String countryNameKo,
+        long viewCount) {
 
     public static FeedPostResponse from(Trip trip, String coverImageUrl) {
         var user = trip.getUser();
@@ -31,6 +32,7 @@ public record FeedPostResponse(
                 region != null ? region.getNameKo() : null,
                 country.getIsoA3(),
                 country.getIsoA2(),
-                country.getNameKo());
+                country.getNameKo(),
+                trip.getViewCount());
     }
 }

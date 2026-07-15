@@ -40,6 +40,7 @@
                 <th>제목</th>
                 <th>방문일</th>
                 <th>공개범위</th>
+                <th>조회수</th>
             </tr>
             </thead>
             <tbody>
@@ -53,9 +54,10 @@
                     <span th:if="${trip.visibility.name() == 'FOLLOWERS_ONLY'}" class="badge">친구공개</span>
                     <span th:if="${trip.visibility.name() == 'PRIVATE'}" class="badge badge-gray">비공개</span>
                 </td>
+                <td class="muted" th:text="${trip.viewCount}"></td>
             </tr>
             <tr th:if="${trips.isEmpty()}">
-                <td colspan="5" class="empty">등록된 여행이 없습니다. "+ 여행 등록"으로 첫 여행을 남겨보세요.</td>
+                <td colspan="6" class="empty">등록된 여행이 없습니다. "+ 여행 등록"으로 첫 여행을 남겨보세요.</td>
             </tr>
             </tbody>
         </table>

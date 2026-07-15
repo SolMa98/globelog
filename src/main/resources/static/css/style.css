@@ -878,6 +878,13 @@ html, body {
     white-space: nowrap;
 }
 
+.feed-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
 .feed-card-author {
     font-size: 11.5px;
     color: rgba(255, 255, 255, 0.45);
@@ -888,6 +895,11 @@ html, body {
 .feed-card-author:hover {
     text-decoration: underline;
     color: #9aa3b2;
+}
+
+.feed-card-views {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
 }
 
 #feed-loading,

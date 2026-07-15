@@ -17,6 +17,7 @@ public record MyTripDetailResponse(
         LocalDate endDate,
         String description,
         TripVisibility visibility,
+        long viewCount,
         List<AdminTripImageResponse> images) {
 
     public static MyTripDetailResponse from(Trip trip, List<AdminTripImageResponse> images) {
@@ -26,6 +27,6 @@ public record MyTripDetailResponse(
                 trip.getId(), regionId, regionNameKo,
                 trip.getCountry().getId(), trip.getCountry().getNameKo(),
                 trip.getTitle(), trip.getVisitedDate(), trip.getEndDate(), trip.getDescription(),
-                trip.getVisibility(), images);
+                trip.getVisibility(), trip.getViewCount(), images);
     }
 }

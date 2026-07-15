@@ -11,10 +11,12 @@ import kr.co.dh.globelog.domain.TripImageRepository;
 import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -97,6 +99,22 @@ public class TripApiController {
 
         Long regionId = trip.getRegion() != null ? trip.getRegion().getId() : null;
         return TripDetailResponse.from(trip, regionId, visitNumber, images);
+    }
+
+    // 여행 스토리를 열 때마다 클라이언트가 호출하는 조회수 증가 API. 비로그인 방문자도
+    // 공개 게시글을 볼 수 있으므로 로그인을 요구하지 않되, canView를 통과한 것만 센다
+    // (권한 없는 요청으로 조회수만 올라가는 걸 막기 위함). 중복 집계 방지는 클라이언트의
+    // localStorage 하루 1회 제한에 맡기고 서버는 단순 증가만 한다.
+    @PostMapping("/trips/{id}/view")
+    public Map<String, Object> incrementView(@PathVariable Long id, Authentication authentication) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "여행을 찾을 수 없습니다: " + id));
+        if (!tripVisibilityService.canView(trip, authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "볼 수 없는 여행입니다.");
+        }
+        trip.incrementViewCount();
+        tripRepository.save(trip);
+        return Map.of("viewCount", trip.getViewCount());
     }
 
     private List<TripSummaryResponse> numbered(List<Trip> trips) {
