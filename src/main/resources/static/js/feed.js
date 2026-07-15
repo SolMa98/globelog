@@ -4,22 +4,65 @@
     var emptyEl = document.getElementById('feed-empty');
     if (!listEl) return;
 
-    fetch('/api/feed')
-        .then(function (res) { return res.json(); })
-        .then(render)
-        .catch(function () {
-            loadingEl.textContent = '피드를 불러오지 못했습니다.';
-        });
+    var viewerLoggedIn = false;
+    var currentFilter = 'all';
 
-    function render(posts) {
+    fetch('/api/me')
+        .then(function (res) { return res.json(); })
+        .then(function (me) { viewerLoggedIn = me.loggedIn; })
+        .catch(function () {});
+
+    document.querySelectorAll('.feed-filter-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var filter = tab.dataset.filter;
+            if (filter === currentFilter) return;
+            document.querySelectorAll('.feed-filter-tab').forEach(function (t) {
+                t.classList.remove('active');
+            });
+            tab.classList.add('active');
+            currentFilter = filter;
+            loadFeed(filter);
+        });
+    });
+
+    loadFeed(currentFilter);
+
+    function loadFeed(filter) {
+        listEl.innerHTML = '';
+        emptyEl.classList.add('hidden');
+        loadingEl.textContent = '불러오는 중...';
+        loadingEl.classList.remove('hidden');
+
+        fetch('/api/feed?filter=' + encodeURIComponent(filter))
+            .then(function (res) { return res.json(); })
+            .then(function (posts) { render(posts, filter); })
+            .catch(function () {
+                loadingEl.textContent = '피드를 불러오지 못했습니다.';
+            });
+    }
+
+    function render(posts, filter) {
         loadingEl.classList.add('hidden');
         if (!posts.length) {
+            emptyEl.textContent = emptyMessage(filter);
             emptyEl.classList.remove('hidden');
             return;
         }
         posts.forEach(function (post) {
             listEl.appendChild(buildCard(post));
         });
+    }
+
+    function emptyMessage(filter) {
+        if (filter === 'following') {
+            return viewerLoggedIn
+                ? '팔로우한 사용자의 게시글이 아직 없습니다.'
+                : '로그인하면 팔로우한 사용자의 게시글을 볼 수 있어요.';
+        }
+        if (filter === 'popular') {
+            return '아직 인기 게시글이 없습니다.';
+        }
+        return '아직 피드에 표시할 게시글이 없습니다.';
     }
 
     function buildCard(post) {

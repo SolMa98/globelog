@@ -50,4 +50,25 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
             + "SELECT 1 FROM follow f WHERE f.follower_id = :viewerId AND f.followee_id = t.user_id"
             + "))) ORDER BY RAND() * POW(0.5, t.priority) LIMIT :limit", nativeQuery = true)
     List<Trip> findRandomFeedForViewer(@Param("viewerId") Long viewerId, @Param("limit") int limit);
+
+    // "팔로잉" 피드 탭: 뷰어가 팔로우한 사람의 글만, 최신순. 랜덤/가중치가 아니라
+    // 사용자가 직접 고른 "이 사람들"만 보는 필터라 최신순이 더 직관적이라 판단.
+    @Query(value = "SELECT * FROM trip t WHERE t.user_id IS NOT NULL "
+            + "AND EXISTS (SELECT 1 FROM follow f WHERE f.follower_id = :viewerId AND f.followee_id = t.user_id) "
+            + "AND (t.visibility = 'PUBLIC' OR t.visibility = 'FOLLOWERS_ONLY') "
+            + "ORDER BY t.created_at DESC LIMIT :limit", nativeQuery = true)
+    List<Trip> findFollowingFeed(@Param("viewerId") Long viewerId, @Param("limit") int limit);
+
+    // "인기" 피드 탭(비로그인/공개용): 조회수 내림차순.
+    @Query(value = "SELECT * FROM trip t WHERE t.visibility = 'PUBLIC' AND t.user_id IS NOT NULL "
+            + "ORDER BY t.view_count DESC, t.created_at DESC LIMIT :limit", nativeQuery = true)
+    List<Trip> findPopularPublicFeed(@Param("limit") int limit);
+
+    // "인기" 피드 탭(로그인 뷰어용): 가시성 규칙은 기존 랜덤 피드와 동일, 정렬만 조회수 기준.
+    @Query(value = "SELECT * FROM trip t WHERE t.user_id IS NOT NULL AND ("
+            + "t.visibility = 'PUBLIC' OR ("
+            + "t.visibility = 'FOLLOWERS_ONLY' AND EXISTS ("
+            + "SELECT 1 FROM follow f WHERE f.follower_id = :viewerId AND f.followee_id = t.user_id"
+            + "))) ORDER BY t.view_count DESC, t.created_at DESC LIMIT :limit", nativeQuery = true)
+    List<Trip> findPopularFeedForViewer(@Param("viewerId") Long viewerId, @Param("limit") int limit);
 }
