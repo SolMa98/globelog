@@ -17,6 +17,9 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByUserIdOrderByVisitedDateDesc(Long userId);
 
+    // 프로필 페이지의 "여행 기록" 통계 카드용.
+    long countByUserId(Long userId);
+
     // 피드 상단의 "방문 국가 수" 표시용 — 같은 국가에 여러 여행을 등록해도 1개국으로 센다.
     @Query("SELECT COUNT(DISTINCT t.country.id) FROM Trip t WHERE t.user.id = :userId")
     long countDistinctCountryByUserId(@Param("userId") Long userId);

@@ -8,7 +8,7 @@
         .catch(function () {});
 
     function render(me) {
-        renderVisitedCountrySummary(me);
+        renderFeedHero(me);
         accountBoxEl.innerHTML = '';
 
         // 지구본은 항상 특정 사용자 소유(/u/{nickname}/globe)라, 그 페이지에서는
@@ -69,15 +69,20 @@
     }
 
     // 피드 페이지(index.html)에만 있는 요소라 다른 페이지에서는 그냥 조용히 스킵됨.
-    function renderVisitedCountrySummary(me) {
-        var summaryEl = document.getElementById('visited-country-summary');
-        if (!summaryEl) return;
+    function renderFeedHero(me) {
+        var heroEl = document.getElementById('feed-hero');
+        if (!heroEl) return;
         if (!me.loggedIn || !me.visitedCountryCount) {
-            summaryEl.classList.add('hidden');
+            heroEl.classList.add('hidden');
             return;
         }
-        document.getElementById('visited-country-count').textContent = me.visitedCountryCount;
-        summaryEl.classList.remove('hidden');
+        document.getElementById('feed-hero-count').innerHTML =
+            me.visitedCountryCount + '<span>개국</span>';
+        var percent = me.totalCountryCount
+            ? Math.round((me.visitedCountryCount / me.totalCountryCount) * 100)
+            : 0;
+        document.getElementById('feed-hero-sub').textContent = '전 세계의 ' + percent + '% 방문 완료';
+        heroEl.classList.remove('hidden');
     }
 
     function logout(csrfHeaderName, csrfToken) {

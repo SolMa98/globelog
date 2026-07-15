@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/vendor/tom-select.min.css}">
     <link rel="stylesheet" th:href="@{/css/vendor/flatpickr.min.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <script th:src="@{/js/country-color.js}"></script>
 </head>
 <body class="admin-body">
 <div class="admin-shell">
@@ -43,7 +44,7 @@
             </thead>
             <tbody>
             <tr th:each="trip : ${trips}" class="js-row-edit" th:data-id="${trip.id}">
-                <td><span class="badge" th:text="${trip.country.nameKo}"></span></td>
+                <td><span class="badge js-country-badge" th:attr="data-iso=${trip.country.isoA3}" th:text="${trip.country.nameKo}"></span></td>
                 <td th:text="${trip.region != null ? trip.region.nameKo : '—'}"></td>
                 <td th:text="${trip.title}"></td>
                 <td class="muted" th:text="${trip.visitedDate}"></td>

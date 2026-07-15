@@ -7,6 +7,9 @@ public record UserProfileResponse(
         String bio,
         long followerCount,
         long followingCount,
+        long tripCount,
+        long visitedCountryCount,
+        int joinYear,
         boolean isFollowing,
         boolean isSelf) {
 }

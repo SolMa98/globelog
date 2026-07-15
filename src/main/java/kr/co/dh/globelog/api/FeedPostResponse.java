@@ -13,6 +13,7 @@ public record FeedPostResponse(
         String authorProfileImageUrl,
         String regionNameKo,
         String countryIsoA3,
+        String countryIsoA2,
         String countryNameKo) {
 
     public static FeedPostResponse from(Trip trip, String coverImageUrl) {
@@ -29,6 +30,7 @@ public record FeedPostResponse(
                 user.getProfileImageUrl(),
                 region != null ? region.getNameKo() : null,
                 country.getIsoA3(),
+                country.getIsoA2(),
                 country.getNameKo());
     }
 }

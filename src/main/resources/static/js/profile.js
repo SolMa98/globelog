@@ -26,19 +26,43 @@
 
     function render(profile) {
         document.getElementById('profile-nickname').textContent = profile.nickname;
+        document.getElementById('profile-subtitle').textContent = '여행자 · ' + profile.joinYear + '년부터';
+        renderAvatar(profile);
         updateCounts(profile);
+        renderActions(profile);
+    }
 
+    function renderAvatar(profile) {
+        var avatarEl = document.getElementById('profile-avatar');
+        if (profile.profileImageUrl) {
+            avatarEl.style.backgroundImage = 'url(' + profile.profileImageUrl + ')';
+        }
+    }
+
+    function renderActions(profile) {
         var actionsEl = document.getElementById('profile-actions');
         actionsEl.innerHTML = '';
 
         if (profile.isSelf) {
+            var globeLink = document.createElement('a');
+            globeLink.href = '/u/' + encodeURIComponent(profile.nickname) + '/globe';
+            globeLink.className = 'btn btn-primary btn-block';
+            globeLink.textContent = '내 지구본 보기';
+
+            var manageLink = document.createElement('a');
+            manageLink.href = '/my/trips';
+            manageLink.className = 'btn btn-ghost btn-block';
+            manageLink.textContent = '여행 관리';
+
+            actionsEl.appendChild(globeLink);
+            actionsEl.appendChild(manageLink);
             return;
         }
 
         if (!viewerLoggedIn) {
             var loginLink = document.createElement('a');
             loginLink.href = '/login';
-            loginLink.className = 'btn btn-primary';
+            loginLink.className = 'btn btn-primary btn-block';
             loginLink.textContent = '로그인하고 팔로우하기';
             actionsEl.appendChild(loginLink);
             return;
@@ -46,7 +70,6 @@
 
         var followBtn = document.createElement('button');
         followBtn.type = 'button';
-        followBtn.className = 'btn btn-primary';
         setButtonLabel(followBtn, profile.isFollowing);
         followBtn.addEventListener('click', function () {
             toggleFollow(profile, followBtn);
@@ -56,12 +79,13 @@
 
     function setButtonLabel(btn, isFollowing) {
         btn.textContent = isFollowing ? '언팔로우' : '팔로우';
-        btn.className = isFollowing ? 'btn btn-ghost' : 'btn btn-primary';
+        btn.className = isFollowing ? 'btn btn-ghost btn-block' : 'btn btn-primary btn-block';
     }
 
     function updateCounts(profile) {
-        document.getElementById('profile-counts').textContent =
-            '팔로워 ' + profile.followerCount + ' · 팔로잉 ' + profile.followingCount;
+        document.getElementById('stat-country').textContent = profile.visitedCountryCount;
+        document.getElementById('stat-trips').textContent = profile.tripCount;
+        document.getElementById('stat-followers').textContent = profile.followerCount;
     }
 
     function toggleFollow(profile, btn) {

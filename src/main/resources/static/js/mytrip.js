@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
+    if (window.GlobelogCountryColor) {
+        GlobelogCountryColor.applyBadges(document, '.js-country-badge');
+    }
+
     var createModal = document.getElementById('trip-create-modal');
     var editModal = document.getElementById('trip-edit-modal');
     var openCreateBtn = document.getElementById('open-trip-create');

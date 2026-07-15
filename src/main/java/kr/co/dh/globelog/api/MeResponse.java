@@ -6,6 +6,7 @@ public record MeResponse(
         String nickname,
         String profileImageUrl,
         Long visitedCountryCount,
+        long totalCountryCount,
         String csrfHeaderName,
         String csrfToken) {
 }

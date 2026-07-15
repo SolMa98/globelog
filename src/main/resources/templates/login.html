@@ -56,8 +56,11 @@
 <button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
 <div class="login-wrap">
     <form class="login-form card" th:action="@{/login}" method="post">
-        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
-        <h1>로그인</h1>
+        <div class="login-brand">
+            <img th:src="@{/favicon.svg}" alt="">
+            <span class="login-brand-word">Globelog</span>
+        </div>
+        <h1 class="visually-hidden">로그인</h1>
         <p th:if="${param.error != null and param.error[0] == 'unverified'}" class="error" style="text-align:center;margin:0">
             이메일 인증이 필요합니다. 가입 시 받은 인증 메일을 확인해주세요.
         </p>

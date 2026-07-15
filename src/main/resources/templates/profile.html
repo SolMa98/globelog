@@ -8,19 +8,34 @@
     <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body class="login-page">
-<button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
 <div class="login-wrap">
-    <div class="card" id="profile-card" th:attr="data-nickname=${nickname}" style="max-width:420px;text-align:center">
-        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+    <div class="card profile-card" id="profile-card" th:attr="data-nickname=${nickname}">
+        <div class="profile-avatar" id="profile-avatar"></div>
         <h1 id="profile-nickname">-</h1>
-        <p id="profile-counts" class="muted"></p>
-        <div id="profile-actions" style="margin-top:8px"></div>
-        <p style="margin-top:16px;font-size:13px">
+        <p id="profile-subtitle" class="muted">-</p>
+
+        <div class="profile-stats">
+            <div class="profile-stat profile-stat-accent">
+                <div class="profile-stat-num" id="stat-country">-</div>
+                <div class="profile-stat-label">방문국가</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-num" id="stat-trips">-</div>
+                <div class="profile-stat-label">여행 기록</div>
+            </div>
+            <div class="profile-stat">
+                <div class="profile-stat-num" id="stat-followers">-</div>
+                <div class="profile-stat-label">팔로워</div>
+            </div>
+        </div>
+
+        <div id="profile-actions" class="profile-actions"></div>
+
+        <p class="profile-footer-links">
             <a th:href="@{/}">← 피드로</a> · <a th:href="@{'/u/' + ${nickname} + '/globe'}">지구본 보기</a>
         </p>
     </div>
 </div>
 <script th:src="@{/js/profile.js}"></script>
-<script th:src="@{/js/theme.js}"></script>
 </body>
 </html>

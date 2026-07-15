@@ -3,6 +3,7 @@ package kr.co.dh.globelog.profile;
 import java.util.Optional;
 import kr.co.dh.globelog.domain.Follow;
 import kr.co.dh.globelog.domain.FollowRepository;
+import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
 import kr.co.dh.globelog.security.CurrentUserResolver;
@@ -28,12 +29,14 @@ public class ProfileController {
 
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
+    private final TripRepository tripRepository;
     private final CurrentUserResolver currentUserResolver;
 
     public ProfileController(UserRepository userRepository, FollowRepository followRepository,
-            CurrentUserResolver currentUserResolver) {
+            TripRepository tripRepository, CurrentUserResolver currentUserResolver) {
         this.userRepository = userRepository;
         this.followRepository = followRepository;
+        this.tripRepository = tripRepository;
         this.currentUserResolver = currentUserResolver;
     }
 
@@ -93,12 +96,15 @@ public class ProfileController {
     private UserProfileResponse buildResponse(User target, Authentication authentication) {
         long followerCount = followRepository.countByFolloweeId(target.getId());
         long followingCount = followRepository.countByFollowerId(target.getId());
+        long tripCount = tripRepository.countByUserId(target.getId());
+        long visitedCountryCount = tripRepository.countDistinctCountryByUserId(target.getId());
         Optional<User> viewer = currentUserResolver.resolve(authentication);
         boolean isSelf = viewer.map(v -> v.getId().equals(target.getId())).orElse(false);
         boolean isFollowing = viewer.filter(v -> !isSelf)
                 .map(v -> followRepository.existsByFollowerIdAndFolloweeId(v.getId(), target.getId()))
                 .orElse(false);
         return new UserProfileResponse(target.getId(), target.getNickname(), target.getProfileImageUrl(),
-                target.getBio(), followerCount, followingCount, isFollowing, isSelf);
+                target.getBio(), followerCount, followingCount, tripCount, visitedCountryCount,
+                target.getCreatedAt().getYear(), isFollowing, isSelf);
     }
 }

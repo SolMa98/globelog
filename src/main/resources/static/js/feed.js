@@ -56,19 +56,20 @@
         var body = document.createElement('div');
         body.className = 'feed-card-body';
 
-        var titleEl = document.createElement('div');
+        var metaEl = document.createElement('div');
+        metaEl.className = 'feed-card-meta';
+        var metaParts = [flagEmoji(post.countryIsoA2), post.countryNameKo];
+        if (post.regionNameKo) metaParts.push(post.regionNameKo);
+        metaEl.textContent = metaParts.filter(Boolean).join(' · ');
+        if (window.GlobelogCountryColor && post.countryIsoA3) {
+            metaEl.style.color = GlobelogCountryColor.colorFor(post.countryIsoA3).text;
+        }
+        body.appendChild(metaEl);
+
+        var titleEl = document.createElement('h3');
         titleEl.className = 'feed-card-title';
         titleEl.textContent = post.title;
         body.appendChild(titleEl);
-
-        var metaEl = document.createElement('div');
-        metaEl.className = 'feed-card-meta';
-        var metaParts = [];
-        if (post.regionNameKo) metaParts.push(post.regionNameKo);
-        if (post.countryNameKo) metaParts.push(post.countryNameKo);
-        if (post.visitedDate) metaParts.push(post.visitedDate);
-        metaEl.textContent = metaParts.join(' · ');
-        body.appendChild(metaEl);
 
         var authorEl = document.createElement('a');
         authorEl.className = 'feed-card-author';
@@ -78,5 +79,15 @@
 
         card.appendChild(body);
         return card;
+    }
+
+    // isoA2(ex. "PT") → 국기 이모지. 각 알파벳을 유니코드 Regional Indicator
+    // Symbol로 치환하는 표준 트릭(A~Z가 U+1F1E6~U+1F1FF에 순서대로 대응).
+    function flagEmoji(isoA2) {
+        if (!isoA2 || isoA2.length !== 2) return '';
+        var codePoints = isoA2.toUpperCase().split('').map(function (c) {
+            return 127397 + c.charCodeAt(0);
+        });
+        return String.fromCodePoint.apply(String, codePoints);
     }
 })();

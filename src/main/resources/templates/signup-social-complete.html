@@ -12,7 +12,10 @@
 <button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
 <div class="login-wrap">
     <form class="login-form card" th:action="@{/signup/social/complete}" method="post">
-        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
+        <div class="login-brand">
+            <img th:src="@{/favicon.svg}" alt="">
+            <span class="login-brand-word">Globelog</span>
+        </div>
         <h1>거의 다 됐어요</h1>
         <p style="text-align:center;margin:0;font-size:13px" class="muted">
             <span th:text="${email}"></span> 계정으로 처음 로그인하셨네요. 사용하실 닉네임을 정해주세요.

@@ -12,8 +12,11 @@
 <button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
 <div class="login-wrap">
     <form class="login-form card" id="signup-form" th:action="@{/signup}" method="post">
-        <div class="login-brand"><img th:src="@{/favicon.svg}" alt="Globelog"></div>
-        <h1>회원가입</h1>
+        <div class="login-brand">
+            <img th:src="@{/favicon.svg}" alt="">
+            <span class="login-brand-word">Globelog</span>
+        </div>
+        <h1 class="visually-hidden">회원가입</h1>
         <p th:if="${error}" class="error" style="text-align:center;margin:0" th:text="${error}"></p>
         <label>
             이메일

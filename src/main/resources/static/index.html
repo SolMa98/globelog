@@ -15,7 +15,23 @@
         <div id="account-box"></div>
     </header>
 
-    <p id="visited-country-summary" class="hidden">🌍 지금까지 <strong id="visited-country-count">0</strong>개국 방문</p>
+    <div id="feed-hero" class="hidden">
+        <div id="feed-hero-globe" aria-hidden="true">
+            <span class="feed-hero-dot" style="top:28%;left:32%"></span>
+            <span class="feed-hero-dot" style="top:52%;left:60%"></span>
+            <span class="feed-hero-dot" style="top:64%;left:24%"></span>
+        </div>
+        <div id="feed-hero-text">
+            <div id="feed-hero-count">0<span>개국</span></div>
+            <div id="feed-hero-sub">전 세계의 0% 방문 완료</div>
+        </div>
+    </div>
+
+    <div id="feed-filters">
+        <button type="button" class="feed-filter-tab active" data-filter="all">전체</button>
+        <button type="button" class="feed-filter-tab" data-filter="following">팔로잉</button>
+        <button type="button" class="feed-filter-tab" data-filter="popular">인기</button>
+    </div>
 
     <div id="feed-list"></div>
     <p id="feed-loading">불러오는 중...</p>
@@ -29,6 +45,7 @@
     <a href="/login" id="bn-profile" class="bn-item"><span class="bn-icon bn-icon-profile"></span>프로필</a>
 </nav>
 
+<script src="/js/country-color.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/feed.js"></script>
 <script>
