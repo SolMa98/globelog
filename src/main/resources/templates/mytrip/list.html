@@ -93,6 +93,10 @@
                     <input type="text" name="title" required>
                 </label>
                 <label>
+                    대표 사진 <span class="muted" style="font-weight:400;font-size:12px">(선택 사항 · JPEG면 촬영일자를 자동으로 채워요)</span>
+                    <input type="file" id="create-cover-photo" accept="image/*">
+                </label>
+                <label>
                     여행 기간
                     <input type="text" id="create-date-range" class="flatpickr-input" placeholder="날짜를 선택하세요" readonly="readonly">
                     <input type="hidden" name="visitedDate" id="create-visited-date">
@@ -198,6 +202,7 @@
 <script th:src="@{/js/vendor/flatpickr.min.js}"></script>
 <script th:src="@{/js/vendor/flatpickr-ko.js}"></script>
 <script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/exif-date.js}"></script>
 <script th:src="@{/js/mytrip.js}"></script>
 <script th:src="@{/js/theme.js}"></script>
 </body>

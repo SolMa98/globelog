@@ -123,7 +123,14 @@
       "Bash(pip3 install *)",
       "Bash(node check-like-comment.js)",
       "Bash(node check-full.js)",
-      "Bash(node check-feed-like.js)"
+      "Bash(node check-feed-like.js)",
+      "Bash(timeout 90 ./gradlew --offline dependencyInsight --dependency jai-imageio-core --configuration runtimeClasspath)",
+      "Bash(./gradlew --offline dependencyInsight --dependency jai-imageio-core --configuration runtimeClasspath)",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/mytrip.js)",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/exif-date.js)",
+      "Bash(node check-exif-mytrip.js)",
+      "Bash(sed -i '' \"s/대한민국/한국/\" check-exif-mytrip.js debug-exif-mytrip2.js)",
+      "Bash(node debug-exif-mytrip2.js)"
     ]
   }
 }

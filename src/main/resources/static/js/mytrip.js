@@ -100,6 +100,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var createDateRangeInput = document.getElementById('create-date-range');
         var createVisitedDate = document.getElementById('create-visited-date');
         var createEndDate = document.getElementById('create-end-date');
+        var createCoverPhotoInput = document.getElementById('create-cover-photo');
+        var createRangePicker = null;
 
         openCreateBtn.addEventListener('click', function () {
             createModal.querySelector('form').reset();
@@ -107,9 +109,23 @@ document.addEventListener('DOMContentLoaded', function () {
             createEndDate.value = '';
             if (createRegionSelect) createRegionSelect.innerHTML = '<option value="">지역 선택 (선택 사항)</option>';
             initCountryTomSelect(createCountrySelect);
-            initRangePicker(createDateRangeInput, createVisitedDate, createEndDate, null);
+            createRangePicker = initRangePicker(createDateRangeInput, createVisitedDate, createEndDate, null);
             AdminModal.open(createModal);
         });
+
+        // 사진을 고르면 JPEG EXIF의 촬영일자를 읽어 기간이 비어있을 때만 자동으로 채운다
+        // (이미 날짜를 골라둔 상태라면 사진 때문에 덮어써지면 안 되므로 건드리지 않음).
+        if (createCoverPhotoInput && window.GlobelogExif) {
+            createCoverPhotoInput.addEventListener('change', function () {
+                var file = createCoverPhotoInput.files[0];
+                if (!file || createVisitedDate.value) return;
+                GlobelogExif.readDateTaken(file, function (dateStr) {
+                    if (!dateStr || createVisitedDate.value) return;
+                    var parsed = new Date(dateStr + 'T00:00:00');
+                    if (createRangePicker) createRangePicker.setDate([parsed], true);
+                });
+            });
+        }
 
         createModal.querySelector('form').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -117,15 +133,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 AdminModal.showError('여행 기간을 선택해주세요.');
                 return;
             }
+            var coverPhoto = createCoverPhotoInput && createCoverPhotoInput.files[0];
             fetch('/my/trips', { method: 'POST', body: new FormData(e.target) })
                 .then(parseResponse)
                 .then(function (result) {
-                    if (result.ok && result.data.success) {
+                    if (!result.ok || !result.data.success) {
+                        AdminModal.showError(result.data.message || '등록에 실패했습니다.');
+                        return;
+                    }
+                    if (!coverPhoto) {
                         AdminModal.close(createModal);
                         AdminModal.showSuccess('여행이 등록되었습니다.', function () { window.location.reload(); });
-                    } else {
-                        AdminModal.showError(result.data.message || '등록에 실패했습니다.');
+                        return;
                     }
+                    // 사진 업로드는 여행이 먼저 생성돼야 가능한 별도 API라, 등록 직후
+                    // 같은 CSRF 토큰으로 이어서 호출한다. 실패해도 여행 등록 자체는
+                    // 이미 끝난 상태이므로 안내만 하고 그대로 진행한다.
+                    var csrfInput = e.target.querySelector('input[type=hidden]');
+                    var body = new FormData();
+                    body.append(csrfInput.name, csrfInput.value);
+                    body.append('file', coverPhoto);
+                    fetch('/my/trips/' + result.data.id + '/images', { method: 'POST', body: body })
+                        .then(parseResponse)
+                        .then(function (imgResult) {
+                            AdminModal.close(createModal);
+                            if (imgResult.ok && imgResult.data.success) {
+                                AdminModal.showSuccess('여행이 등록되었습니다.', function () { window.location.reload(); });
+                            } else {
+                                AdminModal.showSuccess('여행은 등록됐지만 사진 업로드에는 실패했습니다. 수정 화면에서 다시 추가해주세요.',
+                                    function () { window.location.reload(); });
+                            }
+                        })
+                        .catch(function () {
+                            AdminModal.close(createModal);
+                            AdminModal.showSuccess('여행은 등록됐지만 사진 업로드에는 실패했습니다. 수정 화면에서 다시 추가해주세요.',
+                                function () { window.location.reload(); });
+                        });
                 })
                 .catch(function () { AdminModal.showError(); });
         });
