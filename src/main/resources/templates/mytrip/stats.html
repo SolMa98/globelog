@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 내 통계</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <a th:href="@{/}">← 피드로</a>
+            <span class="breadcrumb-sep">›</span>
+            <span>내 통계</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="theme-toggle-btn" class="btn-icon" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+        </div>
+    </div>
+    <p class="muted" style="margin:-8px 0 16px;font-size:13px">
+        ⓘ 내가 등록한 여행 기록 기준입니다(공개범위와 무관하게 비공개·친구공개 여행도 포함).
+    </p>
+
+    <div class="stats-grid">
+        <div class="card stat-card">
+            <div class="stat-label">방문 국가</div>
+            <div class="stat-number" id="stat-visited-count">-</div>
+            <div class="stat-sub" id="stat-visited-sub"></div>
+            <div class="chart-box chart-box-sm">
+                <canvas id="chart-visited"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="list-toolbar-title">연도별 여행 횟수</h2>
+            <div class="chart-box">
+                <canvas id="chart-yearly"></canvas>
+            </div>
+        </div>
+
+        <div class="card stats-grid-full">
+            <h2 class="list-toolbar-title">대륙별 방문 커버리지</h2>
+            <div class="chart-box">
+                <canvas id="chart-continent"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+<script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/vendor/chart.min.js}"></script>
+<script th:src="@{/js/my-stats.js}"></script>
+</body>
+</html>

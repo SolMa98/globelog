@@ -50,6 +50,10 @@
         myTripsLink.href = '/my/trips';
         myTripsLink.textContent = '내 여행';
 
+        var statsLink = document.createElement('a');
+        statsLink.href = '/my/stats';
+        statsLink.textContent = '내 통계';
+
         var securityLink = document.createElement('a');
         securityLink.href = '/my/security';
         securityLink.textContent = '보안';
@@ -62,6 +66,8 @@
         accountBoxEl.appendChild(nicknameEl);
         accountBoxEl.appendChild(document.createTextNode(' · '));
         accountBoxEl.appendChild(myTripsLink);
+        accountBoxEl.appendChild(document.createTextNode(' · '));
+        accountBoxEl.appendChild(statsLink);
         accountBoxEl.appendChild(document.createTextNode(' · '));
         accountBoxEl.appendChild(securityLink);
         accountBoxEl.appendChild(document.createTextNode(' · '));

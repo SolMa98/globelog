@@ -130,7 +130,8 @@
       "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/exif-date.js)",
       "Bash(node check-exif-mytrip.js)",
       "Bash(sed -i '' \"s/대한민국/한국/\" check-exif-mytrip.js debug-exif-mytrip2.js)",
-      "Bash(node debug-exif-mytrip2.js)"
+      "Bash(node debug-exif-mytrip2.js)",
+      "Bash(node check-my-stats.js)"
     ]
   }
 }

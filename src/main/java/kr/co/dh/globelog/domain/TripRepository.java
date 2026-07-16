@@ -31,6 +31,11 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT t.country.isoA3 AS isoA3, t.visitedDate AS visitedDate FROM Trip t")
     List<TripStatsProjection> findStatsProjection();
 
+    // 개인 통계 페이지(/my/stats)용 — 관리자 통계(findStatsProjection)는 전체 사용자
+    // 합산이 의도된 동작이라 그대로 두고, 이건 완전히 분리된 메서드로 owner 하나만 본다.
+    @Query("SELECT t.country.isoA3 AS isoA3, t.visitedDate AS visitedDate FROM Trip t WHERE t.user.id = :userId")
+    List<TripStatsProjection> findStatsProjectionByUserId(@Param("userId") Long userId);
+
     // 공개 피드용 무작위 추출(비로그인 방문자용). "알고리즘"은 추천엔진이 아니라 단순
     // 랜덤 셔플에 관리자 우선순위 가중치만 얹은 것 — 완전 결정론적 고정노출이 아니라
     // POW(0.5, priority)로 정렬값을 작게 만들어(priority 1당 절반씩) LIMIT 안에 뽑힐

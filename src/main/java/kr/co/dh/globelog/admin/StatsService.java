@@ -10,14 +10,14 @@ import kr.co.dh.globelog.domain.TripStatsProjection;
 import org.springframework.stereotype.Service;
 
 /**
- * 관리자 백오피스(/admin/stats) 전용 통계 계산.
+ * 통계 계산 — 관리자 백오피스(/admin/stats, compute())와 개인 통계 페이지
+ * (/my/stats, computeForUser())가 함께 쓴다.
  *
  * {@link TripRepository#findStatsProjection()}는 owner/visibility 필터가 전혀 없이
  * 전체 사용자의 모든 여행을 합산한다 — 단일 사용자 시절에 만들어진 코드가 다중 사용자
  * 전환 이후에도 그대로 남은 것이 아니라, "관리자 감사용 대시보드는 전체 사용자 합산
- * (비공개 포함)"으로 의도적으로 유지하기로 확정한 것이다(2026-07-07). 개인별 통계가
- * 필요해지면 owner 파라미터를 받는 별도 조회 메서드를 추가할 것 — 이 메서드에 조건부
- * 파라미터를 끼워넣지 말고 완전히 분리된 메서드로 둘 것(용도가 다름).
+ * (비공개 포함)"으로 의도적으로 유지하기로 확정한 것이다(2026-07-07). computeForUser()는
+ * 그 결정을 건드리지 않기 위해 조건부 파라미터를 끼워넣지 않고 완전히 분리해서 추가함.
  */
 @Service
 public class StatsService {
@@ -37,8 +37,16 @@ public class StatsService {
     }
 
     public AdminStatsResponse compute() {
-        List<TripStatsProjection> trips = tripRepository.findStatsProjection();
+        return computeFrom(tripRepository.findStatsProjection());
+    }
 
+    // 개인 통계(/my/stats)용 — 클래스 상단 주석대로 조건부 파라미터를 끼워넣지 않고
+    // 완전히 분리된 공개 메서드로 둔다. 집계 로직 자체는 compute()와 동일해 computeFrom으로만 공유.
+    public AdminStatsResponse computeForUser(Long userId) {
+        return computeFrom(tripRepository.findStatsProjectionByUserId(userId));
+    }
+
+    private AdminStatsResponse computeFrom(List<TripStatsProjection> trips) {
         Set<String> visitedIsoA3 = trips.stream()
                 .map(TripStatsProjection::getIsoA3)
                 .collect(Collectors.toSet());
