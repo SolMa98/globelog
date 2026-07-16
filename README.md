@@ -58,7 +58,7 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 ./gradlew bootRun
 ```
 
-기본적으로 `http://localhost:8080`에서 서비스가 뜹니다. 첫 기동 시 다음이 자동으로 준비됩니다:
+기본적으로 `http://localhost:15790`에서 서비스가 뜹니다(`SERVER_PORT` 환경변수로 변경 가능). 첫 기동 시 다음이 자동으로 준비됩니다:
 - 관리자 계정 생성(계정: `admin` / 비밀번호: `changeme123`). 이 계정은 `must_change_password` 플래그가 켜진 채로 만들어져서, 최초 로그인 시 `/admin/change-password`로 강제 이동되고 비밀번호를 바꾸기 전까지는 다른 어드민 화면에 들어갈 수 없음(신규 관리자 계정을 추가로 만들 때도 동일하게 적용됨). 배포 시에는 `ADMIN_BOOTSTRAP_PASSWORD` 환경변수로 최초 비밀번호 자체도 바꿀 수 있음 — 단, 이미 계정이 생성된 이후에는 이 값을 바꿔도 기존 비밀번호에 영향 없음
 - 전세계 236개국 국가 마스터 데이터 자동 등록(`countries-ref.json` 기반, 이미 등록된 국가는 건드리지 않고 없는 것만 채움 — 재기동해도 안전)
 
@@ -73,7 +73,8 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 네이버 간편 로그인 | [네이버 개발자센터](https://developers.naver.com/) → 네이버 로그인 API, 리디렉션 URI: `{base-url}/login/oauth2/code/naver` |
 | `KAKAO_CLIENT_ID` | 카카오 간편 로그인 | [카카오 개발자센터](https://developers.kakao.com/) → 카카오 로그인 활성화 + 이메일 동의항목, 리디렉션 URI: `{base-url}/login/oauth2/code/kakao` |
 | `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`, `PORTONE_API_SECRET` | 회원가입 시 실명 본인인증(1인 1계정 검증) | [PortOne 콘솔](https://admin.portone.io) → 다날 본인인증 채널 연동. 실서비스 전환에는 PG 심사(사업자등록 등)가 필요할 수 있음 |
-| `APP_BASE_URL` | 인증 메일 링크, OAuth 콜백 등에 쓰이는 서비스 base URL | 배포 도메인으로 설정(기본값 `http://localhost:8080`) |
+| `SERVER_PORT` | 서버가 뜨는 포트 | 기본값 `15790` |
+| `APP_BASE_URL` | 인증 메일 링크, OAuth 콜백 등에 쓰이는 서비스 base URL | 배포 도메인으로 설정(기본값 `http://localhost:15790`) |
 | `SESSION_COOKIE_SECURE` | 세션 쿠키 Secure 속성 | HTTPS로 배포할 때만 `true`로 설정(로컬 HTTP 개발 중에 켜면 로그인이 깨짐, 기본값 `false`) |
 | `DB_USERNAME`, `DB_PASSWORD` | MariaDB 접속 계정 | 1단계에서 만든 계정/비밀번호가 기본값과 다르면 설정 |
 | `ADMIN_BOOTSTRAP_PASSWORD` | 최초 관리자 계정 비밀번호 | 기본값(`changeme123`) 대신 배포 전에 설정 권장 |

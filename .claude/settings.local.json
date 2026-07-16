@@ -103,7 +103,18 @@
       "Bash(echo \"COMPILE_EXIT=$?\")",
       "Bash(git commit -m ' *)",
       "Bash(git checkout *)",
-      "Bash(node --check src/main/resources/static/js/feed.js)"
+      "Bash(node --check src/main/resources/static/js/feed.js)",
+      "Bash(lsof -i :8080 -sTCP:LISTEN)",
+      "Bash(lsof -i :15790 -sTCP:LISTEN)",
+      "Bash(kill 6446 6458)",
+      "Bash(./gradlew bootRun)",
+      "Bash(echo \"started with pid $!\")",
+      "Bash(node -e \"console.log\\(require.resolve\\('puppeteer-core'\\)\\)\")",
+      "Bash(node check-favicon.js)",
+      "Bash(lsof *)",
+      "Bash(kill 55533)",
+      "Bash(echo \"started $!\")",
+      "Bash(node check-hero-fade.js)"
     ]
   }
 }

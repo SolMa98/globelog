@@ -1,5 +1,12 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css');
 
+/* 지구본↔피드 등 페이지 이동 시 브라우저 네이티브 크로스도큐먼트 전환(페이드)을 사용해
+   풀 리로드로 인한 화면 끊김을 완화한다. 미지원 브라우저(Safari 등)는 그냥 무시하고
+   기존처럼 즉시 전환되므로 하위 호환에 영향 없다. */
+@view-transition {
+    navigation: auto;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -944,6 +951,7 @@ html, body {
 
 .bn-icon {
     flex-shrink: 0;
+    color: inherit;
 }
 
 .bn-item:hover {
@@ -952,26 +960,6 @@ html, body {
 
 .bn-item.active {
     color: #4fc3de;
-}
-
-.bn-icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    border: 1.5px solid rgba(255, 255, 255, 0.3);
-}
-
-.bn-item.active .bn-icon {
-    border-color: transparent;
-    background: rgba(79, 195, 222, 0.2);
-}
-
-.bn-icon-globe {
-    border-radius: 50%;
-}
-
-.bn-icon-profile {
-    border-radius: 50%;
 }
 
 @media (max-width: 640px) {
