@@ -102,11 +102,16 @@ document.addEventListener('DOMContentLoaded', function () {
         var createEndDate = document.getElementById('create-end-date');
         var createCoverPhotoInput = document.getElementById('create-cover-photo');
         var createRangePicker = null;
+        // EXIF 파싱은 비동기(FileReader)라, 사진을 고르자마자 바로 등록 버튼을 누르면
+        // 날짜가 채워지기도 전에 "기간을 선택해주세요"로 막히는 문제가 있었다. 제출
+        // 시점에 이 프라미스가 있으면 먼저 기다렸다가 진행하도록 한다.
+        var exifReadyPromise = null;
 
         openCreateBtn.addEventListener('click', function () {
             createModal.querySelector('form').reset();
             createVisitedDate.value = '';
             createEndDate.value = '';
+            exifReadyPromise = null;
             if (createRegionSelect) createRegionSelect.innerHTML = '<option value="">지역 선택 (선택 사항)</option>';
             initCountryTomSelect(createCountrySelect);
             createRangePicker = initRangePicker(createDateRangeInput, createVisitedDate, createEndDate, null);
@@ -118,23 +123,32 @@ document.addEventListener('DOMContentLoaded', function () {
         if (createCoverPhotoInput && window.GlobelogExif) {
             createCoverPhotoInput.addEventListener('change', function () {
                 var file = createCoverPhotoInput.files[0];
-                if (!file || createVisitedDate.value) return;
-                GlobelogExif.readDateTaken(file, function (dateStr) {
-                    if (!dateStr || createVisitedDate.value) return;
-                    var parsed = new Date(dateStr + 'T00:00:00');
-                    if (createRangePicker) createRangePicker.setDate([parsed], true);
+                if (!file) { exifReadyPromise = null; return; }
+                exifReadyPromise = new Promise(function (resolve) {
+                    GlobelogExif.readDateTaken(file, function (dateStr) {
+                        if (dateStr && !createVisitedDate.value) {
+                            var parsed = new Date(dateStr + 'T00:00:00');
+                            if (createRangePicker) createRangePicker.setDate([parsed], true);
+                        }
+                        resolve();
+                    });
                 });
             });
         }
 
         createModal.querySelector('form').addEventListener('submit', function (e) {
             e.preventDefault();
+            var form = e.target;
+            Promise.resolve(exifReadyPromise).then(function () { submitCreate(form); });
+        });
+
+        function submitCreate(form) {
             if (!createVisitedDate.value) {
                 AdminModal.showError('여행 기간을 선택해주세요.');
                 return;
             }
             var coverPhoto = createCoverPhotoInput && createCoverPhotoInput.files[0];
-            fetch('/my/trips', { method: 'POST', body: new FormData(e.target) })
+            fetch('/my/trips', { method: 'POST', body: new FormData(form) })
                 .then(parseResponse)
                 .then(function (result) {
                     if (!result.ok || !result.data.success) {
@@ -149,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // 사진 업로드는 여행이 먼저 생성돼야 가능한 별도 API라, 등록 직후
                     // 같은 CSRF 토큰으로 이어서 호출한다. 실패해도 여행 등록 자체는
                     // 이미 끝난 상태이므로 안내만 하고 그대로 진행한다.
-                    var csrfInput = e.target.querySelector('input[type=hidden]');
+                    var csrfInput = form.querySelector('input[type=hidden]');
                     var body = new FormData();
                     body.append(csrfInput.name, csrfInput.value);
                     body.append('file', coverPhoto);
@@ -171,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                 })
                 .catch(function () { AdminModal.showError(); });
-        });
+        }
     }
 
     if (!editModal) return;

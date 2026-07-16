@@ -109,9 +109,12 @@ public class TripApiController {
                 .map(TripImageResponse::from)
                 .toList();
 
-        long likeCount = tripLikeRepository.countByTripId(id);
+        // likeCount/likedByViewer를 쿼리 두 번(countByTripId + existsByTripIdAndUserId)
+        // 대신, 좋아요한 사용자 id 목록을 한 번만 가져와 개수/포함여부를 같이 계산한다.
+        List<Long> likerIds = tripLikeRepository.findUserIdsByTripId(id);
+        long likeCount = likerIds.size();
         Optional<User> viewer = currentUserResolver.resolve(authentication);
-        boolean likedByViewer = viewer.map(v -> tripLikeRepository.existsByTripIdAndUserId(id, v.getId())).orElse(false);
+        boolean likedByViewer = viewer.map(v -> likerIds.contains(v.getId())).orElse(false);
         long commentCount = tripCommentRepository.countByTripId(id);
 
         Long regionId = trip.getRegion() != null ? trip.getRegion().getId() : null;

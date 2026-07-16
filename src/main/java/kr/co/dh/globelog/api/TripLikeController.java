@@ -6,6 +6,7 @@ import kr.co.dh.globelog.domain.TripLikeRepository;
 import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.security.CurrentUserResolver;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,12 +38,20 @@ public class TripLikeController {
         this.currentUserResolver = currentUserResolver;
     }
 
+    // exists-check 후 save()라 동시 요청(더블탭, 여러 탭)이 겹치면 두 요청 모두 exists==false를
+    // 보고 나서 각각 insert를 시도할 수 있다 — (trip_id, user_id) unique 제약을 위반하는
+    // 두 번째 insert는 DataIntegrityViolationException으로 잡아 "이미 좋아요된 상태"와
+    // 동일하게 취급한다(사용자 입장에선 최종 결과가 같으므로 500 대신 그대로 성공 처리).
     @PostMapping
     public TripLikeResponse like(@PathVariable Long tripId, Authentication authentication) {
         User viewer = requireLoggedIn(authentication);
         Trip trip = findViewableTripOrThrow(tripId, authentication);
         if (!tripLikeRepository.existsByTripIdAndUserId(trip.getId(), viewer.getId())) {
-            tripLikeRepository.save(new TripLike(trip, viewer));
+            try {
+                tripLikeRepository.saveAndFlush(new TripLike(trip, viewer));
+            } catch (DataIntegrityViolationException e) {
+                // 동시 요청으로 이미 다른 트랜잭션이 먼저 넣은 경우 — 결과적으로 원하던 상태와 같음
+            }
         }
         return new TripLikeResponse(tripLikeRepository.countByTripId(tripId), true);
     }

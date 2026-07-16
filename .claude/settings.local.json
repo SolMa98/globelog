@@ -133,7 +133,17 @@
       "Bash(node debug-exif-mytrip2.js)",
       "Bash(node check-my-stats.js)",
       "Bash(node check-pwa.js)",
-      "Bash(node check-pwa-globe.js)"
+      "Bash(node check-pwa-globe.js)",
+      "Skill(code-review)",
+      "Bash(xargs cat)",
+      "Bash(xargs -I{} sh -c 'echo ==={}===; cat {}')",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/service-worker.js)",
+      "Bash(node verify-exif-mime.js)",
+      "Bash(node verify-exif-race-fix.js)",
+      "Bash(node verify-comment-panel-fixes.js)",
+      "Bash(node verify-storypaused-fix.js)",
+      "Bash(node verify-stats-shared.js)",
+      "Bash(node verify-regression.js)"
     ]
   }
 }

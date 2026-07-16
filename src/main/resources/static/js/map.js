@@ -593,13 +593,25 @@
     }
 
     // ── 댓글 ─────────────────────────────────────────────────
+    // 댓글 패널을 열어둔 채 다른 게시글로 넘어가면 loadComments가 다시 호출되는데,
+    // 네트워크 지연으로 이전 요청이 나중에 도착하면 화면엔 새 게시글이 보이는데
+    // 댓글은 이전 게시글 것이 덮어써질 수 있다. 요청마다 순번을 매겨 마지막으로
+    // 보낸 요청의 응답만 반영되게 한다.
+    var commentRequestSeq = 0;
     function loadComments(tripId) {
+        var requestId = ++commentRequestSeq;
         storyCommentItemsEl.innerHTML = '';
         storyCommentEmptyEl.classList.add('hidden');
         fetch('/api/trips/' + tripId + '/comments')
             .then(function (res) { return res.ok ? res.json() : []; })
-            .then(function (comments) { renderComments(tripId, comments); })
-            .catch(function () { renderComments(tripId, []); });
+            .then(function (comments) {
+                if (requestId !== commentRequestSeq) return; // 그 사이 다른 요청이 더 나감
+                renderComments(tripId, comments);
+            })
+            .catch(function () {
+                if (requestId !== commentRequestSeq) return;
+                renderComments(tripId, []);
+            });
     }
 
     function renderComments(tripId, comments) {
@@ -646,6 +658,8 @@
         return li;
     }
 
+    // 입력값은 성공이 확인된 뒤에만 지운다 — 실패(네트워크 오류/세션 만료 등) 시
+    // 입력창을 그대로 두고 살짝 흔들어 실패를 표시해서, 쓴 댓글이 사라지지 않게 한다.
     function submitComment(tripId, content) {
         return fetchCsrf().then(function (auth) {
             if (!auth || !auth.loggedIn) {
@@ -660,12 +674,18 @@
                 body: JSON.stringify({ content: content })
             }).then(function (res) { return res.ok ? res.json() : null; });
         }).then(function (comment) {
-            if (!comment) return;
+            if (!comment) { markCommentSubmitFailed(); return; }
+            storyCommentInputEl.value = '';
             storyCommentEmptyEl.classList.add('hidden');
             storyCommentItemsEl.appendChild(buildCommentItem(tripId, comment));
             storyCommentItemsEl.scrollTop = storyCommentItemsEl.scrollHeight;
             bumpCommentCount(tripId, 1);
-        }).catch(function () {});
+        }).catch(function () { markCommentSubmitFailed(); });
+    }
+
+    function markCommentSubmitFailed() {
+        storyCommentInputEl.classList.add('story-comment-input-error');
+        setTimeout(function () { storyCommentInputEl.classList.remove('story-comment-input-error'); }, 600);
     }
 
     function deleteComment(tripId, commentId, itemEl) {
@@ -701,7 +721,14 @@
 
     function closeCommentPanel() {
         storyCommentPanelEl.classList.add('hidden');
-        if (storyPaused) resumeAutoAdvance();
+        if (storyPaused && !anyOverlayOpen()) resumeAutoAdvance();
+    }
+
+    // 목록 패널/댓글 패널 둘 다 열려있을 수 있는데, 자동재생 재개는 "둘 다 닫혔을 때"만
+    // 해야 한다 — 하나만 닫혔다고 재개하면 나머지 패널이 화면을 덮고 있는 동안 슬라이드가
+    // 몰래 넘어가버린다.
+    function anyOverlayOpen() {
+        return !storyJumpListEl.classList.contains('hidden') || !storyCommentPanelEl.classList.contains('hidden');
     }
 
     // 같은 게시글을 여러 번 열어도(사진이 여러 장이라 슬라이드를 오가는 경우 포함)
@@ -720,21 +747,12 @@
             .catch(function () {});
     }
 
-    // 쿠키(XSRF-TOKEN)에 든 원본 토큰 값을 그대로 헤더에 넣으면 안 된다 — Spring
-    // Security 6 기본 핸들러(XorCsrfTokenRequestAttributeHandler)는 응답 바디로
-    // 내려준 "마스킹된" 토큰만 유효하게 검증한다(쿠키 원본 값은 403). auth.js 등
-    // 다른 화면과 동일하게 /api/me 응답의 csrfToken을 써야 한다.
-    var csrfPromise = null;
+    // CSRF 조회/캐싱은 feed.js와 공유하는 static/js/csrf.js(GlobelogCsrf)로 옮겼다 —
+    // 이전엔 이 파일에 직접 구현돼 있었는데 feed.js가 캐싱/재시도 없이 따로 재구현해서
+    // 중복이었다. 아래 함수는 기존 호출부(registerView/toggleLike/submitComment/
+    // deleteComment)를 안 건드리기 위한 얇은 위임.
     function fetchCsrf() {
-        if (!csrfPromise) {
-            csrfPromise = fetch('/api/me')
-                .then(function (res) { return res.json(); })
-                .then(function (me) {
-                    return { headerName: me.csrfHeaderName, token: me.csrfToken, loggedIn: me.loggedIn };
-                })
-                .catch(function () { csrfPromise = null; return null; });
-        }
-        return csrfPromise;
+        return GlobelogCsrf.fetch();
     }
 
     // ── 게시글 목록으로 바로 점프 ──────────────────────────────
@@ -787,7 +805,7 @@
 
     function closeJumpList() {
         storyJumpListEl.classList.add('hidden');
-        if (storyPaused) resumeAutoAdvance();
+        if (storyPaused && !anyOverlayOpen()) resumeAutoAdvance();
     }
 
     function storyNext() {
@@ -916,7 +934,6 @@
         if (!content) return;
         var slide = storySlides[storyIndex];
         if (!slide) return;
-        storyCommentInputEl.value = '';
         submitComment(slide.tripId, content);
     });
     bindStoryNavZone(storyNavPrevEl, storyPrev);

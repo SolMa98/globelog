@@ -1,11 +1,16 @@
 // 최소한의 오프라인 지원용 서비스워커. 지구본(3D 지도 타일)까지 오프라인으로 띄우는
 // 건 범위 밖 — 앱 셸(HTML/CSS/JS/아이콘)만 캐싱해서, 네트워크가 없을 때도 최소한
 // 골격 화면은 뜨게 하는 정도로만 둔다.
-var CACHE_NAME = 'globelog-shell-v1';
+// 정적 자산/아이콘을 새로 추가할 때마다 이 목록도 같이 챙겨야 한다 — 캐시 목록은
+// HTML의 <link>/<script>에서 자동으로 뽑아오는 게 아니라 손으로 맞춰야 함.
+var CACHE_NAME = 'globelog-shell-v2';
 var APP_SHELL = [
     '/',
     '/globe.html',
     '/favicon.svg',
+    '/favicon-16.png',
+    '/favicon-32.png',
+    '/apple-touch-icon-180.png',
     '/manifest.json',
     '/css/style.css',
     '/css/vendor/maplibre-gl.min.css',
@@ -14,7 +19,8 @@ var APP_SHELL = [
     '/js/auth.js',
     '/js/feed.js',
     '/js/map.js',
-    '/js/globe.js'
+    '/js/globe.js',
+    '/js/pwa.js'
 ];
 
 self.addEventListener('install', function (event) {
@@ -48,11 +54,22 @@ self.addEventListener('fetch', function (event) {
         return;
     }
 
-    // 정적 자산은 캐시 우선 — 자주 안 바뀌고, 오프라인에서도 화면 골격이 뜨게 하기 위함.
+    // 정적 자산은 stale-while-revalidate — 캐시가 있으면 즉시 그걸로 응답해 오프라인에서도
+    // 화면 골격이 뜨게 하되, 동시에 네트워크로 최신본을 받아와 캐시를 갱신한다. 순수
+    // 캐시 우선(예전 방식)은 CACHE_NAME을 사람이 매번 안 올리면 배포 후에도 옛 자산을
+    // 계속 서빙하는 문제가 있었음 — 이렇게 하면 다음 방문부터는 자동으로 최신이 반영된다.
     var url = new URL(req.url);
     if (url.origin === location.origin && APP_SHELL.indexOf(url.pathname) !== -1) {
         event.respondWith(
-            caches.match(req).then(function (cached) { return cached || fetch(req); })
+            caches.open(CACHE_NAME).then(function (cache) {
+                return cache.match(req).then(function (cached) {
+                    var networkFetch = fetch(req).then(function (res) {
+                        if (res.ok) cache.put(req, res.clone());
+                        return res;
+                    }).catch(function () { return cached; });
+                    return cached || networkFetch;
+                });
+            })
         );
     }
 });

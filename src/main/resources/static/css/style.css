@@ -633,6 +633,12 @@ html, body {
     color: #fff;
     padding: 8px 14px;
     font-size: 13px;
+    transition: border-color .15s ease;
+}
+
+/* 댓글 전송 실패 시 입력값은 남겨두고(유실 방지) 테두리만 붉게 잠깐 표시 */
+#story-comment-input.story-comment-input-error {
+    border-color: #ef5b7a;
 }
 
 #story-comment-form button {

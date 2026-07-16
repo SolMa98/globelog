@@ -4,8 +4,19 @@
 // 컨테이너 구조가 달라 대상 밖), 못 읽으면 조용히 null을 돌려준다(호출부가 수동 입력으로
 // 대체하면 되므로 에러를 굳이 노출하지 않음).
 window.GlobelogExif = (function () {
+    // file.type만 보면 일부 구형 안드로이드 파일 선택기가 'image/jpg'로 보고하거나,
+    // OS 파일관리자 드래그앤드롭이 빈 문자열('')을 주는 경우 실제 JPEG인데도 걸러진다 —
+    // 확장자까지 함께 봐서 판단한다(그래도 아니면 파싱 단계에서 SOI 마커로 다시 걸러짐).
+    function looksLikeJpeg(file) {
+        var type = (file.type || '').toLowerCase();
+        if (type === 'image/jpeg' || type === 'image/jpg') return true;
+        if (type !== '') return false;
+        var name = (file.name || '').toLowerCase();
+        return name.endsWith('.jpg') || name.endsWith('.jpeg');
+    }
+
     function readDateTaken(file, callback) {
-        if (!file || file.type !== 'image/jpeg') { callback(null); return; }
+        if (!file || !looksLikeJpeg(file)) { callback(null); return; }
         var reader = new FileReader();
         reader.onload = function (e) {
             var date = null;

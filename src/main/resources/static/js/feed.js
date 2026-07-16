@@ -6,15 +6,12 @@
 
     var viewerLoggedIn = false;
     var currentFilter = 'all';
-    var csrf = null; // { headerName, token } — 좋아요 POST/DELETE에 씀
 
-    fetch('/api/me')
-        .then(function (res) { return res.json(); })
-        .then(function (me) {
-            viewerLoggedIn = me.loggedIn;
-            csrf = { headerName: me.csrfHeaderName, token: me.csrfToken };
-        })
-        .catch(function () {});
+    // CSRF 조회는 map.js와 공유하는 static/js/csrf.js(GlobelogCsrf)를 쓴다 — 캐싱+실패 시
+    // 재시도가 이미 돼 있어, 여기서 따로 /api/me를 fetch해서 재구현할 필요가 없다.
+    GlobelogCsrf.fetch().then(function (auth) {
+        viewerLoggedIn = !!(auth && auth.loggedIn);
+    });
 
     document.querySelectorAll('.feed-filter-tab').forEach(function (tab) {
         tab.addEventListener('click', function () {
@@ -160,10 +157,12 @@
                 window.location.href = '/login';
                 return;
             }
-            var headers = {};
-            if (csrf) headers[csrf.headerName] = csrf.token;
-            var method = liked ? 'DELETE' : 'POST';
-            fetch('/api/trips/' + post.tripId + '/like', { method: method, headers: headers })
+            GlobelogCsrf.fetch().then(function (auth) {
+                var headers = {};
+                if (auth) headers[auth.headerName] = auth.token;
+                var method = liked ? 'DELETE' : 'POST';
+                return fetch('/api/trips/' + post.tripId + '/like', { method: method, headers: headers });
+            })
                 .then(function (res) { return res.ok ? res.json() : null; })
                 .then(function (result) {
                     if (!result) return;
