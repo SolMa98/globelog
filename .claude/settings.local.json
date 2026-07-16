@@ -131,7 +131,9 @@
       "Bash(node check-exif-mytrip.js)",
       "Bash(sed -i '' \"s/대한민국/한국/\" check-exif-mytrip.js debug-exif-mytrip2.js)",
       "Bash(node debug-exif-mytrip2.js)",
-      "Bash(node check-my-stats.js)"
+      "Bash(node check-my-stats.js)",
+      "Bash(node check-pwa.js)",
+      "Bash(node check-pwa-globe.js)"
     ]
   }
 }

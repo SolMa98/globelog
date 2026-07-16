@@ -1,0 +1,16 @@
+{
+  "name": "Globelog",
+  "short_name": "Globelog",
+  "description": "지구본으로 여행 기록을 남기고 다른 사람의 여행을 피드로 구경하는 여행 기록 앱",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070a11",
+  "theme_color": "#070a11",
+  "icons": [
+    { "src": "/favicon-16.png", "sizes": "16x16", "type": "image/png" },
+    { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/app-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
