@@ -114,7 +114,10 @@
       "Bash(lsof *)",
       "Bash(kill 55533)",
       "Bash(echo \"started $!\")",
-      "Bash(node check-hero-fade.js)"
+      "Bash(node check-hero-fade.js)",
+      "Bash(node check-login-back.js)",
+      "Bash(sed 's#/login#/signup#; s#login-back.png#signup-back.png#' check-login-back.js)",
+      "Bash(node check-signup-back.js)"
     ]
   }
 }
