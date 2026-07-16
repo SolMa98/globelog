@@ -12,9 +12,13 @@ public record TripDetailResponse(
         String description,
         int visitNumber,
         long viewCount,
+        long likeCount,
+        boolean likedByViewer,
+        long commentCount,
         List<TripImageResponse> images) {
 
-    public static TripDetailResponse from(Trip trip, Long regionId, int visitNumber, List<TripImageResponse> images) {
+    public static TripDetailResponse from(Trip trip, Long regionId, int visitNumber, List<TripImageResponse> images,
+            long likeCount, boolean likedByViewer, long commentCount) {
         return new TripDetailResponse(
                 trip.getId(),
                 regionId,
@@ -23,6 +27,9 @@ public record TripDetailResponse(
                 trip.getDescription(),
                 visitNumber,
                 trip.getViewCount(),
+                likeCount,
+                likedByViewer,
+                commentCount,
                 images);
     }
 }

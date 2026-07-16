@@ -52,6 +52,7 @@
     <!-- 지역 클릭 시 전체화면 스토리(방문 기록을 사진 중심 슬라이드로 훑어보기) -->
     <div id="story-view" class="hidden">
         <div id="story-progress"></div>
+        <button id="story-comment-toggle" aria-label="댓글">💬</button>
         <button id="story-jump-toggle" aria-label="게시글 목록">☰</button>
         <button id="story-close" aria-label="닫기">×</button>
 
@@ -67,6 +68,7 @@
                 <div id="story-visit-badge"></div>
                 <h3 id="story-title"></h3>
                 <div id="story-date"></div>
+                <button id="story-like-btn" aria-label="좋아요"><span id="story-like-icon">♡</span> <span id="story-like-count">0</span></button>
                 <p id="story-description"></p>
             </div>
         </div>
@@ -78,6 +80,20 @@
                 <button id="story-jump-close" aria-label="닫기">×</button>
             </div>
             <ul id="story-jump-items"></ul>
+        </div>
+
+        <!-- 댓글 목록 + 작성 -->
+        <div id="story-comment-panel" class="hidden">
+            <div id="story-comment-header">
+                <h4>댓글 <span id="story-comment-count">0</span></h4>
+                <button id="story-comment-close" aria-label="닫기">×</button>
+            </div>
+            <ul id="story-comment-items"></ul>
+            <p id="story-comment-empty" class="hidden">아직 댓글이 없습니다.</p>
+            <form id="story-comment-form">
+                <input id="story-comment-input" type="text" placeholder="댓글 달기..." maxlength="500" autocomplete="off">
+                <button type="submit">등록</button>
+            </form>
         </div>
     </div>
 </div>

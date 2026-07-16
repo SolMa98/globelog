@@ -373,6 +373,26 @@ html, body {
     margin-bottom: 10px;
 }
 
+#story-like-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 13px;
+    padding: 5px 12px;
+    margin: 0 0 10px;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+#story-like-btn.liked {
+    color: #ef5b7a;
+    background: rgba(239, 91, 122, 0.18);
+}
+
 #story-description {
     font-size: 13px;
     line-height: 1.5;
@@ -396,6 +416,22 @@ html, body {
     background: rgba(0, 0, 0, 0.35);
     color: #fff;
     font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#story-comment-toggle {
+    position: absolute;
+    top: 10px;
+    right: 96px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 15px;
     line-height: 1;
     cursor: pointer;
 }
@@ -486,6 +522,128 @@ html, body {
 .story-jump-item-date {
     font-size: 12px;
     color: #9aa3b2;
+}
+
+/* 댓글 목록 + 작성 — 게시글 목록 시트와 동일한 하단 슬라이드업 패턴 */
+#story-comment-panel {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 10;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: #14161f;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+#story-comment-panel.hidden {
+    display: none;
+}
+
+#story-comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 8px;
+    flex-shrink: 0;
+}
+
+#story-comment-header h4 {
+    margin: 0;
+    font-size: 15px;
+}
+
+#story-comment-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+#story-comment-items {
+    list-style: none;
+    margin: 0;
+    padding: 0 16px 8px;
+    overflow-y: auto;
+    min-height: 60px;
+}
+
+#story-comment-empty {
+    text-align: center;
+    color: #9aa3b2;
+    font-size: 13px;
+    padding: 12px 16px;
+}
+
+.story-comment-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.story-comment-item-head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.story-comment-item-author {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.story-comment-item-date {
+    font-size: 11px;
+    color: #9aa3b2;
+}
+
+.story-comment-item-content {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.88);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.story-comment-item-delete {
+    background: none;
+    border: none;
+    color: #9aa3b2;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 6px;
+}
+
+#story-comment-form {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 16px;
+    flex-shrink: 0;
+}
+
+#story-comment-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
+    color: #fff;
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+#story-comment-form button {
+    background: #4fc3de;
+    border: none;
+    border-radius: 20px;
+    color: #04121a;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 16px;
+    cursor: pointer;
 }
 
 #search-box {
@@ -907,6 +1065,27 @@ html, body {
 .feed-card-views {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.35);
+}
+
+.feed-like-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.feed-like-btn:hover {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.feed-like-btn.liked {
+    color: #ef5b7a;
 }
 
 #feed-loading,

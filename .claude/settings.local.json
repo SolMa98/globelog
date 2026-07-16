@@ -117,7 +117,13 @@
       "Bash(node check-hero-fade.js)",
       "Bash(node check-login-back.js)",
       "Bash(sed 's#/login#/signup#; s#login-back.png#signup-back.png#' check-login-back.js)",
-      "Bash(node check-signup-back.js)"
+      "Bash(node check-signup-back.js)",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/map.js)",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/feed.js)",
+      "Bash(pip3 install *)",
+      "Bash(node check-like-comment.js)",
+      "Bash(node check-full.js)",
+      "Bash(node check-feed-like.js)"
     ]
   }
 }

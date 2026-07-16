@@ -47,6 +47,17 @@
     var storyJumpCloseEl       = document.getElementById('story-jump-close');
     var storyJumpListEl        = document.getElementById('story-jump-list');
     var storyJumpItemsEl       = document.getElementById('story-jump-items');
+    var storyLikeBtnEl         = document.getElementById('story-like-btn');
+    var storyLikeIconEl        = document.getElementById('story-like-icon');
+    var storyLikeCountEl       = document.getElementById('story-like-count');
+    var storyCommentToggleEl   = document.getElementById('story-comment-toggle');
+    var storyCommentCloseEl    = document.getElementById('story-comment-close');
+    var storyCommentPanelEl    = document.getElementById('story-comment-panel');
+    var storyCommentCountEl    = document.getElementById('story-comment-count');
+    var storyCommentItemsEl    = document.getElementById('story-comment-items');
+    var storyCommentEmptyEl    = document.getElementById('story-comment-empty');
+    var storyCommentFormEl     = document.getElementById('story-comment-form');
+    var storyCommentInputEl    = document.getElementById('story-comment-input');
 
     var storySlides = [];
     var storyIndex = 0;
@@ -435,12 +446,15 @@
                 var description = detail ? (detail.description || '') : '';
                 var images = (detail && detail.images) ? detail.images : [];
                 var viewCount = detail ? detail.viewCount : trip.viewCount;
+                var likeCount = detail ? detail.likeCount : 0;
+                var likedByViewer = detail ? detail.likedByViewer : false;
+                var commentCount = detail ? detail.commentCount : 0;
                 var firstSlideIndex = storySlides.length;
                 if (images.length === 0) {
-                    storySlides.push(buildSlide(source, trip, description, null, 1, 1, viewCount));
+                    storySlides.push(buildSlide(source, trip, description, null, 1, 1, viewCount, likeCount, likedByViewer, commentCount));
                 } else {
                     images.forEach(function (img, photoIndex) {
-                        storySlides.push(buildSlide(source, trip, description, img.url, photoIndex + 1, images.length, viewCount));
+                        storySlides.push(buildSlide(source, trip, description, img.url, photoIndex + 1, images.length, viewCount, likeCount, likedByViewer, commentCount));
                     });
                 }
                 storyTripEntries.push({
@@ -481,7 +495,7 @@
         renderStorySlide(startIndex);
     }
 
-    function buildSlide(region, trip, description, imageUrl, photoIndex, photoCount, viewCount) {
+    function buildSlide(region, trip, description, imageUrl, photoIndex, photoCount, viewCount, likeCount, likedByViewer, commentCount) {
         return {
             tripId: trip.id,
             regionNameKo: region.nameKo,
@@ -492,7 +506,10 @@
             imageUrl: imageUrl,
             photoIndex: photoIndex,
             photoCount: photoCount,
-            viewCount: viewCount
+            viewCount: viewCount,
+            likeCount: likeCount,
+            likedByViewer: likedByViewer,
+            commentCount: commentCount
         };
     }
 
@@ -537,8 +554,154 @@
         storyTitleEl.textContent = slide.title || '(제목 없음)';
         storyDateEl.textContent = [slide.visitedDate, '조회 ' + (slide.viewCount || 0)].filter(Boolean).join(' · ');
         storyDescriptionEl.textContent = slide.description;
+        renderLikeState(slide.likedByViewer, slide.likeCount);
+        storyCommentCountEl.textContent = slide.commentCount || 0;
+        if (!storyCommentPanelEl.classList.contains('hidden')) loadComments(slide.tripId);
 
         registerView(slide.tripId);
+    }
+
+    function renderLikeState(liked, count) {
+        storyLikeBtnEl.classList.toggle('liked', !!liked);
+        storyLikeIconEl.textContent = liked ? '♥' : '♡';
+        storyLikeCountEl.textContent = count || 0;
+    }
+
+    function toggleLike() {
+        var slide = storySlides[storyIndex];
+        if (!slide) return;
+        fetchCsrf().then(function (auth) {
+            if (!auth || !auth.loggedIn) {
+                window.location.href = '/login';
+                return null;
+            }
+            var headers = {};
+            headers[auth.headerName] = auth.token;
+            var method = slide.likedByViewer ? 'DELETE' : 'POST';
+            return fetch('/api/trips/' + slide.tripId + '/like', { method: method, headers: headers })
+                .then(function (res) { return res.ok ? res.json() : null; });
+        }).then(function (result) {
+            if (!result) return;
+            slide.likedByViewer = result.likedByViewer;
+            slide.likeCount = result.likeCount;
+            // 사진이 여러 장이라 같은 trip의 다른 슬라이드에도 반영되도록 동기화
+            storySlides.forEach(function (s) {
+                if (s.tripId === slide.tripId) { s.likedByViewer = result.likedByViewer; s.likeCount = result.likeCount; }
+            });
+            renderLikeState(slide.likedByViewer, slide.likeCount);
+        }).catch(function () {});
+    }
+
+    // ── 댓글 ─────────────────────────────────────────────────
+    function loadComments(tripId) {
+        storyCommentItemsEl.innerHTML = '';
+        storyCommentEmptyEl.classList.add('hidden');
+        fetch('/api/trips/' + tripId + '/comments')
+            .then(function (res) { return res.ok ? res.json() : []; })
+            .then(function (comments) { renderComments(tripId, comments); })
+            .catch(function () { renderComments(tripId, []); });
+    }
+
+    function renderComments(tripId, comments) {
+        storyCommentItemsEl.innerHTML = '';
+        if (!comments.length) {
+            storyCommentEmptyEl.classList.remove('hidden');
+            return;
+        }
+        storyCommentEmptyEl.classList.add('hidden');
+        comments.forEach(function (comment) {
+            storyCommentItemsEl.appendChild(buildCommentItem(tripId, comment));
+        });
+    }
+
+    function buildCommentItem(tripId, comment) {
+        var li = document.createElement('li');
+        li.className = 'story-comment-item';
+
+        var head = document.createElement('div');
+        head.className = 'story-comment-item-head';
+        var author = document.createElement('span');
+        author.className = 'story-comment-item-author';
+        author.textContent = comment.authorNickname;
+        head.appendChild(author);
+        var date = document.createElement('span');
+        date.className = 'story-comment-item-date';
+        date.textContent = (comment.createdAt || '').slice(0, 10);
+        head.appendChild(date);
+        if (comment.ownedByViewer) {
+            var deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'story-comment-item-delete';
+            deleteBtn.textContent = '삭제';
+            deleteBtn.addEventListener('click', function () { deleteComment(tripId, comment.id, li); });
+            head.appendChild(deleteBtn);
+        }
+        li.appendChild(head);
+
+        var content = document.createElement('div');
+        content.className = 'story-comment-item-content';
+        content.textContent = comment.content;
+        li.appendChild(content);
+
+        return li;
+    }
+
+    function submitComment(tripId, content) {
+        return fetchCsrf().then(function (auth) {
+            if (!auth || !auth.loggedIn) {
+                window.location.href = '/login';
+                return null;
+            }
+            var headers = { 'Content-Type': 'application/json' };
+            headers[auth.headerName] = auth.token;
+            return fetch('/api/trips/' + tripId + '/comments', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ content: content })
+            }).then(function (res) { return res.ok ? res.json() : null; });
+        }).then(function (comment) {
+            if (!comment) return;
+            storyCommentEmptyEl.classList.add('hidden');
+            storyCommentItemsEl.appendChild(buildCommentItem(tripId, comment));
+            storyCommentItemsEl.scrollTop = storyCommentItemsEl.scrollHeight;
+            bumpCommentCount(tripId, 1);
+        }).catch(function () {});
+    }
+
+    function deleteComment(tripId, commentId, itemEl) {
+        fetchCsrf().then(function (auth) {
+            if (!auth) return null;
+            var headers = {};
+            headers[auth.headerName] = auth.token;
+            return fetch('/api/trips/' + tripId + '/comments/' + commentId, { method: 'DELETE', headers: headers });
+        }).then(function (res) {
+            if (!res || !res.ok) return;
+            itemEl.remove();
+            bumpCommentCount(tripId, -1);
+            if (!storyCommentItemsEl.children.length) storyCommentEmptyEl.classList.remove('hidden');
+        }).catch(function () {});
+    }
+
+    function bumpCommentCount(tripId, delta) {
+        storySlides.forEach(function (s) {
+            if (s.tripId === tripId) s.commentCount = Math.max(0, (s.commentCount || 0) + delta);
+        });
+        var slide = storySlides[storyIndex];
+        if (slide && slide.tripId === tripId) {
+            storyCommentCountEl.textContent = slide.commentCount || 0;
+        }
+    }
+
+    function openCommentPanel() {
+        pauseAutoAdvance();
+        var slide = storySlides[storyIndex];
+        if (slide) loadComments(slide.tripId);
+        storyCommentPanelEl.classList.remove('hidden');
+    }
+
+    function closeCommentPanel() {
+        storyCommentPanelEl.classList.add('hidden');
+        if (storyPaused) resumeAutoAdvance();
     }
 
     // 같은 게시글을 여러 번 열어도(사진이 여러 장이라 슬라이드를 오가는 경우 포함)
@@ -566,7 +729,9 @@
         if (!csrfPromise) {
             csrfPromise = fetch('/api/me')
                 .then(function (res) { return res.json(); })
-                .then(function (me) { return { headerName: me.csrfHeaderName, token: me.csrfToken }; })
+                .then(function (me) {
+                    return { headerName: me.csrfHeaderName, token: me.csrfToken, loggedIn: me.loggedIn };
+                })
                 .catch(function () { csrfPromise = null; return null; });
         }
         return csrfPromise;
@@ -723,6 +888,7 @@
         storyIndex = 0;
         storyTripEntries = [];
         storyJumpListEl.classList.add('hidden');
+        storyCommentPanelEl.classList.add('hidden');
     }
 
     function closeMapView() {
@@ -741,17 +907,31 @@
     storyCloseEl.addEventListener('click', closeStory);
     storyJumpToggleEl.addEventListener('click', openJumpList);
     storyJumpCloseEl.addEventListener('click', closeJumpList);
+    storyLikeBtnEl.addEventListener('click', toggleLike);
+    storyCommentToggleEl.addEventListener('click', openCommentPanel);
+    storyCommentCloseEl.addEventListener('click', closeCommentPanel);
+    storyCommentFormEl.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var content = storyCommentInputEl.value.trim();
+        if (!content) return;
+        var slide = storySlides[storyIndex];
+        if (!slide) return;
+        storyCommentInputEl.value = '';
+        submitComment(slide.tripId, content);
+    });
     bindStoryNavZone(storyNavPrevEl, storyPrev);
     bindStoryNavZone(storyNavNextEl, storyNext);
 
     document.addEventListener('keydown', function (e) {
         if (storyViewEl.classList.contains('hidden')) return;
         if (e.key === 'Escape') {
-            if (!storyJumpListEl.classList.contains('hidden')) closeJumpList();
+            if (!storyCommentPanelEl.classList.contains('hidden')) closeCommentPanel();
+            else if (!storyJumpListEl.classList.contains('hidden')) closeJumpList();
             else closeStory();
             return;
         }
-        if (!storyJumpListEl.classList.contains('hidden')) return; // 목록 보는 중엔 좌우 이동 비활성
+        // 목록/댓글 패널을 보는 중엔 좌우 이동 비활성
+        if (!storyJumpListEl.classList.contains('hidden') || !storyCommentPanelEl.classList.contains('hidden')) return;
         if (e.key === 'ArrowRight') storyNext();
         else if (e.key === 'ArrowLeft') storyPrev();
     });

@@ -6,10 +6,14 @@
 
     var viewerLoggedIn = false;
     var currentFilter = 'all';
+    var csrf = null; // { headerName, token } — 좋아요 POST/DELETE에 씀
 
     fetch('/api/me')
         .then(function (res) { return res.json(); })
-        .then(function (me) { viewerLoggedIn = me.loggedIn; })
+        .then(function (me) {
+            viewerLoggedIn = me.loggedIn;
+            csrf = { headerName: me.csrfHeaderName, token: me.csrfToken };
+        })
         .catch(function () {});
 
     document.querySelectorAll('.feed-filter-tab').forEach(function (tab) {
@@ -80,7 +84,7 @@
             + '?tripId=' + encodeURIComponent(post.tripId)
             + '&iso=' + encodeURIComponent(post.countryIsoA3);
         card.addEventListener('click', function (e) {
-            if (e.target.closest('.feed-card-author')) return;
+            if (e.target.closest('.feed-card-author') || e.target.closest('.feed-like-btn')) return;
             window.location.href = globeUrl;
         });
 
@@ -128,10 +132,49 @@
         viewsEl.textContent = '조회 ' + (post.viewCount || 0);
         footerEl.appendChild(viewsEl);
 
+        footerEl.appendChild(buildLikeButton(post));
+
         body.appendChild(footerEl);
 
         card.appendChild(body);
         return card;
+    }
+
+    // 좋아요 버튼 — 비로그인 상태로 누르면 로그인 화면으로 보낸다(카드 클릭과 겹치지
+    // 않도록 buildCard의 클릭 핸들러에서 .feed-like-btn은 별도로 제외해둠).
+    function buildLikeButton(post) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'feed-like-btn';
+        var liked = !!post.likedByViewer;
+        var count = post.likeCount || 0;
+
+        function render() {
+            btn.classList.toggle('liked', liked);
+            btn.innerHTML = (liked ? '♥' : '♡') + ' <span>' + count + '</span>';
+        }
+        render();
+
+        btn.addEventListener('click', function () {
+            if (!viewerLoggedIn) {
+                window.location.href = '/login';
+                return;
+            }
+            var headers = {};
+            if (csrf) headers[csrf.headerName] = csrf.token;
+            var method = liked ? 'DELETE' : 'POST';
+            fetch('/api/trips/' + post.tripId + '/like', { method: method, headers: headers })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (result) {
+                    if (!result) return;
+                    liked = result.likedByViewer;
+                    count = result.likeCount;
+                    render();
+                })
+                .catch(function () {});
+        });
+
+        return btn;
     }
 
     // isoA2(ex. "PT") → 국기 이모지. 각 알파벳을 유니코드 Regional Indicator

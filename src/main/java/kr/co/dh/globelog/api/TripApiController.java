@@ -3,14 +3,18 @@ package kr.co.dh.globelog.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import kr.co.dh.globelog.domain.Country;
 import kr.co.dh.globelog.domain.CountryRepository;
 import kr.co.dh.globelog.domain.RegionRepository;
 import kr.co.dh.globelog.domain.Trip;
+import kr.co.dh.globelog.domain.TripCommentRepository;
 import kr.co.dh.globelog.domain.TripImageRepository;
+import kr.co.dh.globelog.domain.TripLikeRepository;
 import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
+import kr.co.dh.globelog.security.CurrentUserResolver;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -30,18 +34,26 @@ public class TripApiController {
     private final CountryRepository countryRepository;
     private final TripRepository tripRepository;
     private final TripImageRepository tripImageRepository;
+    private final TripLikeRepository tripLikeRepository;
+    private final TripCommentRepository tripCommentRepository;
     private final UserRepository userRepository;
     private final TripVisibilityService tripVisibilityService;
+    private final CurrentUserResolver currentUserResolver;
 
     public TripApiController(RegionRepository regionRepository, CountryRepository countryRepository,
-            TripRepository tripRepository, TripImageRepository tripImageRepository, UserRepository userRepository,
-            TripVisibilityService tripVisibilityService) {
+            TripRepository tripRepository, TripImageRepository tripImageRepository,
+            TripLikeRepository tripLikeRepository, TripCommentRepository tripCommentRepository,
+            UserRepository userRepository, TripVisibilityService tripVisibilityService,
+            CurrentUserResolver currentUserResolver) {
         this.regionRepository = regionRepository;
         this.countryRepository = countryRepository;
         this.tripRepository = tripRepository;
         this.tripImageRepository = tripImageRepository;
+        this.tripLikeRepository = tripLikeRepository;
+        this.tripCommentRepository = tripCommentRepository;
         this.userRepository = userRepository;
         this.tripVisibilityService = tripVisibilityService;
+        this.currentUserResolver = currentUserResolver;
     }
 
     // owner 소유이면서 뷰어에게 공개범위가 통과되는 여행만, 그 owner 기준 방문 순번을
@@ -97,8 +109,13 @@ public class TripApiController {
                 .map(TripImageResponse::from)
                 .toList();
 
+        long likeCount = tripLikeRepository.countByTripId(id);
+        Optional<User> viewer = currentUserResolver.resolve(authentication);
+        boolean likedByViewer = viewer.map(v -> tripLikeRepository.existsByTripIdAndUserId(id, v.getId())).orElse(false);
+        long commentCount = tripCommentRepository.countByTripId(id);
+
         Long regionId = trip.getRegion() != null ? trip.getRegion().getId() : null;
-        return TripDetailResponse.from(trip, regionId, visitNumber, images);
+        return TripDetailResponse.from(trip, regionId, visitNumber, images, likeCount, likedByViewer, commentCount);
     }
 
     // 여행 스토리를 열 때마다 클라이언트가 호출하는 조회수 증가 API. 비로그인 방문자도

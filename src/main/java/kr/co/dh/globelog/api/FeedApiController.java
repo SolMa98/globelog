@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import kr.co.dh.globelog.domain.Trip;
 import kr.co.dh.globelog.domain.TripImageRepository;
+import kr.co.dh.globelog.domain.TripLikeRepository;
 import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.security.CurrentUserResolver;
@@ -22,12 +23,14 @@ public class FeedApiController {
 
     private final TripRepository tripRepository;
     private final TripImageRepository tripImageRepository;
+    private final TripLikeRepository tripLikeRepository;
     private final CurrentUserResolver currentUserResolver;
 
     public FeedApiController(TripRepository tripRepository, TripImageRepository tripImageRepository,
-            CurrentUserResolver currentUserResolver) {
+            TripLikeRepository tripLikeRepository, CurrentUserResolver currentUserResolver) {
         this.tripRepository = tripRepository;
         this.tripImageRepository = tripImageRepository;
+        this.tripLikeRepository = tripLikeRepository;
         this.currentUserResolver = currentUserResolver;
     }
 
@@ -54,8 +57,11 @@ public class FeedApiController {
                     .map(v -> tripRepository.findRandomFeedForViewer(v.getId(), safeLimit))
                     .orElseGet(() -> tripRepository.findRandomPublicFeed(safeLimit));
         };
+        Long viewerId = viewer.map(User::getId).orElse(null);
         return trips.stream()
-                .map(trip -> FeedPostResponse.from(trip, coverImageUrl(trip)))
+                .map(trip -> FeedPostResponse.from(trip, coverImageUrl(trip),
+                        tripLikeRepository.countByTripId(trip.getId()),
+                        viewerId != null && tripLikeRepository.existsByTripIdAndUserId(trip.getId(), viewerId)))
                 .toList();
     }
 
