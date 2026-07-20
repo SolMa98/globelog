@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import kr.co.dh.globelog.domain.ChatMessage;
 import kr.co.dh.globelog.domain.ChatMessageRepository;
+import kr.co.dh.globelog.domain.ChatMessageType;
 import kr.co.dh.globelog.domain.ChatRoom;
 import kr.co.dh.globelog.domain.ChatRoomMember;
 import kr.co.dh.globelog.domain.ChatRoomMemberRepository;
@@ -60,7 +61,7 @@ public class ChatMessageService {
         }
         ChatMessage saved = chatMessageRepository.save(ChatMessage.text(room, sender, trimmed));
         ChatMessageResponse response = ChatMessageResponse.from(saved, sender.getId());
-        broadcast(roomId, response);
+        broadcast(roomId, ChatMessageEvent.NEW, response);
         notifyOtherMembers(room, sender, truncate(trimmed));
         return response;
     }
@@ -72,9 +73,65 @@ public class ChatMessageService {
         ChatMessage saved = chatMessageRepository.save(
                 ChatMessage.file(room, sender, storedPath, file.getOriginalFilename(), file.getSize()));
         ChatMessageResponse response = ChatMessageResponse.from(saved, sender.getId());
-        broadcast(roomId, response);
+        broadcast(roomId, ChatMessageEvent.NEW, response);
         notifyOtherMembers(room, sender, "📎 " + file.getOriginalFilename());
         return response;
+    }
+
+    // 본인 텍스트 메시지만, 삭제되지 않은 상태에서만 수정할 수 있다. 파일 메시지는
+    // 캡션 개념이 없어 수정 대상에서 뺀다.
+    @Transactional
+    public ChatMessageResponse editText(Long roomId, Long messageId, User editor, String newContent) {
+        chatRoomService.requireMemberRoom(roomId, editor.getId());
+        ChatMessage message = findOwnMessageOrThrow(roomId, messageId, editor);
+        if (message.isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제된 메시지는 수정할 수 없습니다.");
+        }
+        if (message.getType() != ChatMessageType.TEXT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "텍스트 메시지만 수정할 수 있습니다.");
+        }
+        String trimmed = newContent == null ? "" : newContent.trim();
+        if (trimmed.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "메시지 내용을 입력해주세요.");
+        }
+        if (trimmed.length() > MAX_CONTENT_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "메시지는 " + MAX_CONTENT_LENGTH + "자 이내로 작성해주세요.");
+        }
+        message.editText(trimmed);
+        ChatMessageResponse response = ChatMessageResponse.from(message, editor.getId());
+        broadcast(roomId, ChatMessageEvent.EDIT, response);
+        return response;
+    }
+
+    // 실제 row는 지우지 않고 상태값(deleted)만 바꾼다 — ChatMessage.markDeleted() 참고.
+    // 첨부파일이었다면 스토리지 파일도 이 시점에 바로 지운다(더 이상 볼 수 없는 메시지라
+    // 3개월 보관정책까지 기다릴 이유가 없음).
+    @Transactional
+    public ChatMessageResponse deleteMessage(Long roomId, Long messageId, User deleter) {
+        chatRoomService.requireMemberRoom(roomId, deleter.getId());
+        ChatMessage message = findOwnMessageOrThrow(roomId, messageId, deleter);
+        if (message.isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 삭제된 메시지입니다.");
+        }
+        if (message.getType() == ChatMessageType.FILE && message.getFilePath() != null) {
+            fileStorageService.delete(message.getFilePath());
+        }
+        message.markDeleted();
+        ChatMessageResponse response = ChatMessageResponse.from(message, deleter.getId());
+        broadcast(roomId, ChatMessageEvent.DELETE, response);
+        return response;
+    }
+
+    private ChatMessage findOwnMessageOrThrow(Long roomId, Long messageId, User user) {
+        ChatMessage message = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메시지를 찾을 수 없습니다: " + messageId));
+        if (!message.getRoom().getId().equals(roomId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "메시지를 찾을 수 없습니다: " + messageId);
+        }
+        if (!message.getSender().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인이 작성한 메시지만 가능합니다.");
+        }
+        return message;
     }
 
     // 최신 메시지부터: beforeId가 없으면 맨 처음 진입(최신 PAGE_SIZE개), 있으면 그보다
@@ -97,8 +154,8 @@ public class ChatMessageService {
         member.setLastReadAt(LocalDateTime.now());
     }
 
-    private void broadcast(Long roomId, ChatMessageResponse response) {
-        messagingTemplate.convertAndSend("/topic/chat." + roomId, response);
+    private void broadcast(Long roomId, String type, ChatMessageResponse response) {
+        messagingTemplate.convertAndSend("/topic/chat." + roomId, ChatMessageEvent.of(type, response));
     }
 
     // 보낸 사람 본인과, 지금 그 방 화면을 실제로 보고 있는 사람(ChatPresenceService)은

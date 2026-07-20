@@ -56,9 +56,20 @@ document.addEventListener('DOMContentLoaded', function () {
             row.appendChild(sender);
         }
 
+        renderBubbleContent(row, message, mine);
+        return row;
+    }
+
+    // 새로 그릴 때도, 수정/삭제로 기존 말풍선 내용을 갈아끼울 때도 이 함수 하나로 처리한다.
+    function renderBubbleContent(row, message, mine) {
+        row.querySelectorAll('.chat-bubble, .chat-bubble-time, .chat-bubble-actions').forEach(function (el) { el.remove(); });
+
         var bubble = document.createElement('div');
         bubble.className = 'chat-bubble';
-        if (message.type === 'FILE') {
+        if (message.deleted) {
+            bubble.classList.add('chat-bubble-deleted');
+            bubble.textContent = '삭제된 메시지입니다.';
+        } else if (message.type === 'FILE') {
             bubble.classList.add('chat-bubble-file');
             if (message.fileExpired) {
                 bubble.textContent = '📎 ' + (message.originalFilename || '파일') + ' (보관기간이 지나 삭제됨)';
@@ -80,15 +91,90 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var time = document.createElement('div');
         time.className = 'chat-bubble-time';
-        time.textContent = formatTime(message.createdAt);
+        var timeText = formatTime(message.createdAt);
+        if (message.edited && !message.deleted) timeText += ' · 수정됨';
+        time.textContent = timeText;
         row.appendChild(time);
 
-        return row;
+        // 본인이 쓴, 삭제되지 않은 메시지에만 수정/삭제 버튼을 둔다. 파일 메시지는
+        // 캡션이 없어 수정은 못 하고 삭제만 가능.
+        if (mine && !message.deleted) {
+            var actions = document.createElement('div');
+            actions.className = 'chat-bubble-actions';
+            if (message.type === 'TEXT') {
+                var editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.textContent = '수정';
+                editBtn.addEventListener('click', function () { startEdit(row, message); });
+                actions.appendChild(editBtn);
+            }
+            var deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = '삭제';
+            deleteBtn.addEventListener('click', function () { deleteMessage(message.id); });
+            actions.appendChild(deleteBtn);
+            row.appendChild(actions);
+        }
+    }
+
+    function startEdit(row, message) {
+        row.querySelectorAll('.chat-bubble, .chat-bubble-time, .chat-bubble-actions').forEach(function (el) { el.remove(); });
+
+        var form = document.createElement('form');
+        form.className = 'chat-bubble-edit-form';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = message.content;
+        input.maxLength = 2000;
+        var saveBtn = document.createElement('button');
+        saveBtn.type = 'submit';
+        saveBtn.textContent = '저장';
+        var cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = '취소';
+        cancelBtn.addEventListener('click', function () { renderBubbleContent(row, message, true); });
+        form.appendChild(input);
+        form.appendChild(saveBtn);
+        form.appendChild(cancelBtn);
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var newContent = input.value.trim();
+            if (!newContent) return;
+            jsonFetch('/api/chat/rooms/' + roomId + '/messages/' + message.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: newContent })
+            }).then(function (res) {
+                if (!res.ok) return readErrorMessage(res, '수정에 실패했습니다.').then(function (msg) { AdminModal.showError(msg); });
+                // 실제 갱신은 이 요청이 트리거하는 WebSocket EDIT 브로드캐스트로 처리된다
+                // (본인 화면도 예외 없이 같은 경로를 타서 서버가 계산한 최종 상태만 반영).
+            }).catch(function () { AdminModal.showError(); });
+        });
+        row.appendChild(form);
+        input.focus();
+    }
+
+    function deleteMessage(messageId) {
+        jsonFetch('/api/chat/rooms/' + roomId + '/messages/' + messageId, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) return readErrorMessage(res, '삭제에 실패했습니다.').then(function (msg) { AdminModal.showError(msg); });
+            })
+            .catch(function () { AdminModal.showError(); });
+    }
+
+    function findRow(messageId) {
+        return messagesEl.querySelector('.chat-bubble-row[data-message-id="' + messageId + '"]');
     }
 
     function appendMessage(message) {
         messagesEl.appendChild(buildBubble(message));
         messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function updateMessage(message) {
+        var row = findRow(message.id);
+        if (!row) return;
+        renderBubbleContent(row, message, message.senderId === myUserId);
     }
 
     function prependMessages(messages) {
@@ -141,8 +227,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     stompClient.onConnect = function () {
         stompClient.subscribe('/topic/chat.' + roomId, function (frame) {
-            appendMessage(JSON.parse(frame.body));
-            markRead();
+            var event = JSON.parse(frame.body);
+            if (event.type === 'EDIT' || event.type === 'DELETE') {
+                updateMessage(event.message);
+            } else {
+                appendMessage(event.message);
+                markRead();
+            }
         });
     };
     stompClient.activate();

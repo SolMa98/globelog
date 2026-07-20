@@ -1961,6 +1961,64 @@ tbody tr.row-active {
     margin-top: 3px;
 }
 
+.chat-bubble-deleted {
+    font-style: italic;
+    color: var(--muted) !important;
+    background: transparent !important;
+}
+
+.chat-bubble-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.chat-bubble-actions button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.chat-bubble-actions button:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.chat-bubble-edit-form {
+    display: flex;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.chat-bubble-edit-form input {
+    flex: 1;
+    min-width: 160px;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text);
+    font-size: 13px;
+}
+
+.chat-bubble-edit-form button {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius-pill);
+    color: #fff;
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.chat-bubble-edit-form button[type=button] {
+    background: var(--surface-raised);
+    color: var(--muted);
+}
+
 .chat-input-bar {
     display: flex;
     align-items: center;
