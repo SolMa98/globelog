@@ -73,6 +73,7 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 네이버 간편 로그인 | [네이버 개발자센터](https://developers.naver.com/) → 네이버 로그인 API, 리디렉션 URI: `{base-url}/login/oauth2/code/naver` |
 | `KAKAO_CLIENT_ID` | 카카오 간편 로그인 | [카카오 개발자센터](https://developers.kakao.com/) → 카카오 로그인 활성화 + 이메일 동의항목, 리디렉션 URI: `{base-url}/login/oauth2/code/kakao` |
 | `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`, `PORTONE_API_SECRET` | 회원가입 시 실명 본인인증(1인 1계정 검증) | [PortOne 콘솔](https://admin.portone.io) → 다날 본인인증 채널 연동. 실서비스 전환에는 PG 심사(사업자등록 등)가 필요할 수 있음 |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | 채팅 새 메시지 브라우저/OS 알림(Web Push) | EC(P-256) 키쌍, base64url 인코딩(패딩 없음). `KeyPairGenerator.getInstance("EC", "BC")`(secp256r1)로 생성 후 `nl.martijndwars.webpush.Utils.encode(...)`로 인코딩. 값이 없으면 알림 발송만 조용히 비활성화됨 |
 | `SERVER_PORT` | 서버가 뜨는 포트 | 기본값 `15790` |
 | `APP_BASE_URL` | 인증 메일 링크, OAuth 콜백 등에 쓰이는 서비스 base URL | 배포 도메인으로 설정(기본값 `http://localhost:15790`) |
 | `SESSION_COOKIE_SECURE` | 세션 쿠키 Secure 속성 | HTTPS로 배포할 때만 `true`로 설정(로컬 HTTP 개발 중에 켜면 로그인이 깨짐, 기본값 `false`) |

@@ -105,6 +105,10 @@ public class SecurityConfig {
                 // X-XSRF-TOKEN 헤더로 실어보낼 수 있게 함(Spring Security 표준 SPA 패턴).
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .authorizeHttpRequests(registry -> registry
+                        // 채팅은 전부 로그인 사용자 전용이라(비로그인 열람 불가) /api/** 공통
+                        // permitAll보다 먼저 매칭되게 위에 둔다. WebSocket 핸드셰이크(/ws-chat)도
+                        // 같은 세션 인증을 타야 STOMP Principal이 채워진다.
+                        .requestMatchers("/ws-chat/**", "/api/chat/**", "/api/push/**").authenticated()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/data/**", "/uploads/**", "/api/**").permitAll()
                         .requestMatchers("/login", "/signup", "/verify-email", "/login/2fa/**", "/signup/social/**")
                         .permitAll()

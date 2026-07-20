@@ -17,6 +17,10 @@ public class FileStorageService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
 
+    // 채팅 첨부파일은 사진 외에 문서도 허용한다(여행 사진 업로드보다 넓은 범위).
+    private static final Set<String> ALLOWED_CHAT_EXTENSIONS = Set.of(
+            "jpg", "jpeg", "png", "gif", "webp", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt");
+
     // 확장자/Content-Type은 클라이언트가 임의로 조작해서 보낼 수 있으므로, 파일 앞부분의
     // 실제 시그니처(매직바이트)까지 대조해야 "확장자만 .jpg로 바꾼 임의 파일" 업로드를 막을 수 있다.
     private static final int SIGNATURE_CHECK_BYTES = 12;
@@ -48,6 +52,33 @@ public class FileStorageService {
             throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extension);
         }
         if (!hasValidSignature(readHeader(file), extension)) {
+            throw new IllegalArgumentException("파일 내용이 확장자(" + extension + ")와 일치하지 않습니다.");
+        }
+
+        String relativePath = buildRelativePath(extension);
+        try (InputStream in = file.getInputStream()) {
+            fileStorage.store(in, relativePath);
+        } catch (IOException e) {
+            throw new UncheckedIOException("파일 저장에 실패했습니다.", e);
+        }
+
+        return relativePath;
+    }
+
+    /**
+     * 채팅 첨부파일(이미지 + 문서) 검증 후 저장 — store()와 저장 경로 규칙은 같고
+     * 허용 확장자/시그니처 검사만 문서까지 넓힌 버전.
+     */
+    public String storeChatAttachment(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+
+        String extension = extractExtension(file.getOriginalFilename());
+        if (!ALLOWED_CHAT_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extension);
+        }
+        if (!hasValidChatSignature(readHeader(file), extension)) {
             throw new IllegalArgumentException("파일 내용이 확장자(" + extension + ")와 일치하지 않습니다.");
         }
 
@@ -103,6 +134,20 @@ public class FileStorageService {
             case "gif" -> startsWith(header, 'G', 'I', 'F', '8') && (header.length > 4 && (header[4] == '7' || header[4] == '9'));
             case "webp" -> startsWith(header, 'R', 'I', 'F', 'F') && header.length >= 12
                     && header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P';
+            default -> false;
+        };
+    }
+
+    // 문서 포맷 매직바이트 — docx/xlsx/pptx는 zip 컨테이너(OOXML)라 PK 시그니처를 공유하고,
+    // doc/xls/ppt(구버전 바이너리)는 OLE 복합문서 시그니처를 공유한다. txt는 일반 텍스트라
+    // 신뢰할 만한 시그니처가 없어 확장자 일치만으로 통과시킨다(플레인 텍스트라 실행 위험 없음).
+    private boolean hasValidChatSignature(byte[] header, String extension) {
+        return switch (extension) {
+            case "jpg", "jpeg", "png", "gif", "webp" -> hasValidSignature(header, extension);
+            case "pdf" -> startsWith(header, '%', 'P', 'D', 'F');
+            case "docx", "xlsx", "pptx" -> startsWith(header, 0x50, 0x4B, 0x03, 0x04);
+            case "doc", "xls", "ppt" -> startsWith(header, 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1);
+            case "txt" -> true;
             default -> false;
         };
     }

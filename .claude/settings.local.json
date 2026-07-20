@@ -143,7 +143,14 @@
       "Bash(node verify-comment-panel-fixes.js)",
       "Bash(node verify-storypaused-fix.js)",
       "Bash(node verify-stats-shared.js)",
-      "Bash(node verify-regression.js)"
+      "Bash(node verify-regression.js)",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/chat-rooms.js)",
+      "Bash(node --check /Users/cnai01/Documents/work/side/src/main/resources/static/js/chat-room.js)",
+      "Bash(node verify-chat.js)",
+      "Bash(node verify-chat2.js)",
+      "Bash(node *)",
+      "Bash(rm -f ~/globelog-uploads/globelog/2026/07/20/9b583105-95fa-4ef8-afaa-9a3991ef403d.jpg)",
+      "Bash(rm -f ~/globelog-uploads/globelog/2026/07/20/f0743be3-940f-4005-8318-1e8cbfee5399.jpg)"
     ]
   }
 }

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 채팅</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <a th:href="@{/}">← 피드로</a>
+            <span class="breadcrumb-sep">›</span>
+            <span>채팅</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="open-chat-create" class="btn btn-primary btn-sm">+ 새 대화</button>
+            <button type="button" id="theme-toggle-btn" class="btn-icon" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+        </div>
+    </div>
+    <div class="chat-push-banner" id="chat-push-banner" style="display:none">
+        <span>🔔 새 메시지가 오면 브라우저 알림을 받아보세요.</span>
+        <button type="button" id="chat-push-enable-btn" class="btn btn-secondary btn-sm">알림 켜기</button>
+    </div>
+    <div class="table-card">
+        <div class="list-toolbar">
+            <h2 class="list-toolbar-title">대화 목록</h2>
+        </div>
+        <ul class="chat-room-list" id="chat-room-list"></ul>
+        <p class="empty" id="chat-room-empty" style="display:none">아직 대화가 없습니다. "+ 새 대화"로 시작해보세요.</p>
+    </div>
+</main>
+</div>
+
+<!-- ── 새 대화 시작 모달 ────────────────────────────── -->
+<div id="chat-create-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>새 대화 시작</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="chat-create-tabs">
+                <button type="button" class="chat-create-tab active" data-tab="direct">1:1 대화</button>
+                <button type="button" class="chat-create-tab" data-tab="group">그룹 채팅</button>
+                <button type="button" class="chat-create-tab" data-tab="self">나와의 채팅</button>
+            </div>
+            <div class="chat-create-panel" data-panel="direct">
+                <label>
+                    상대방 닉네임
+                    <input type="text" id="chat-direct-nickname" placeholder="닉네임을 입력하세요">
+                </label>
+            </div>
+            <div class="chat-create-panel" data-panel="group" style="display:none">
+                <label>
+                    방 이름
+                    <input type="text" id="chat-group-name" placeholder="예: 여행 동행 모임">
+                </label>
+                <label>
+                    초대할 멤버 닉네임 <span class="muted" style="font-weight:400;font-size:12px">(쉼표로 구분)</span>
+                    <input type="text" id="chat-group-members" placeholder="예: alice, bob">
+                </label>
+            </div>
+            <div class="chat-create-panel" data-panel="self" style="display:none">
+                <p class="muted">나만 볼 수 있는 개인 채팅방입니다. 메모장처럼 사용해보세요.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+            <button type="button" id="chat-create-submit" class="btn btn-primary">시작하기</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/pwa.js}"></script>
+<script th:src="@{/js/push.js}"></script>
+<script th:src="@{/js/chat-rooms.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

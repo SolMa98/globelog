@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 채팅</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<main class="page chat-room-page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <a th:href="@{/my/chat}">← 채팅 목록</a>
+            <span class="breadcrumb-sep">›</span>
+            <span id="chat-room-title">불러오는 중...</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" id="chat-invite-btn" class="btn btn-secondary btn-sm" style="display:none">+ 초대</button>
+            <button type="button" id="chat-leave-btn" class="btn btn-ghost btn-sm" style="display:none">나가기</button>
+        </div>
+    </div>
+
+    <div class="chat-window card">
+        <div class="chat-messages" id="chat-messages"></div>
+        <form id="chat-send-form" class="chat-input-bar">
+            <input type="hidden" id="chat-room-id" th:value="${roomId}">
+            <label class="chat-file-btn" aria-label="파일 첨부">
+                📎
+                <input type="file" id="chat-file-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" hidden>
+            </label>
+            <input type="text" id="chat-text-input" placeholder="메시지를 입력하세요" autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-sm">전송</button>
+        </form>
+    </div>
+</main>
+</div>
+
+<!-- ── 멤버 초대 모달(그룹방 전용) ────────────────────────────── -->
+<div id="chat-invite-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>멤버 초대</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+            <label>
+                초대할 닉네임
+                <input type="text" id="chat-invite-nickname" placeholder="닉네임을 입력하세요">
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+            <button type="button" id="chat-invite-submit" class="btn btn-primary">초대하기</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/vendor/stomp.umd.min.js}"></script>
+<script th:src="@{/js/chat-room.js}"></script>
+</body>
+</html>

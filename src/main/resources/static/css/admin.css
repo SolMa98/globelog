@@ -1774,3 +1774,227 @@ tbody tr.row-active {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── 채팅(DM/그룹/개인방) ─────────────────────────────────── */
+.chat-room-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.chat-room-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+}
+
+.chat-room-item:hover {
+    background: var(--hover-bg);
+}
+
+.chat-room-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.chat-room-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-room-name {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-room-preview {
+    font-size: 13px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-room-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.chat-room-time {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.chat-unread-badge {
+    background: var(--danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: var(--radius-pill);
+    padding: 2px 7px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* 새 대화 시작 모달의 탭 */
+.chat-create-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.chat-create-tab {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-create-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.chat-create-panel label {
+    margin-bottom: 12px;
+}
+
+/* 채팅방 화면 */
+.chat-room-page .page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 24px);
+}
+
+.chat-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-bubble-row {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+}
+
+.chat-bubble-row.mine {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.chat-bubble-sender {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+}
+
+.chat-bubble {
+    background: var(--surface-raised);
+    color: var(--text);
+    padding: 8px 13px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chat-bubble-row.mine .chat-bubble {
+    background: var(--accent);
+    color: #fff;
+}
+
+.chat-bubble-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-bubble-file a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.chat-bubble-time {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+.chat-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.chat-input-bar input[type=text] {
+    flex: 1;
+    padding: 9px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text);
+    font-size: 14px;
+}
+
+.chat-file-btn {
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.chat-push-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    font-size: 13px;
+}

@@ -73,3 +73,35 @@ self.addEventListener('fetch', function (event) {
         );
     }
 });
+
+// ── 채팅 새 메시지 브라우저/OS 알림 ─────────────────────────────
+// 서버(WebPushService)가 { title, body, url } JSON을 페이로드로 보낸다.
+self.addEventListener('push', function (event) {
+    var data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (e) {}
+    var title = data.title || 'Globelog';
+    event.waitUntil(
+        self.registration.showNotification(title, {
+            body: data.body || '',
+            icon: '/app-icon-192.png',
+            badge: '/favicon-32.png',
+            data: { url: data.url || '/my/chat' }
+        })
+    );
+});
+
+// 알림을 클릭하면 해당 채팅방 탭이 이미 열려있으면 포커스만, 없으면 새로 연다.
+self.addEventListener('notificationclick', function (event) {
+    event.notification.close();
+    var url = (event.notification.data && event.notification.data.url) || '/my/chat';
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clients) {
+            for (var i = 0; i < clients.length; i++) {
+                if (clients[i].url.indexOf(url) !== -1 && 'focus' in clients[i]) {
+                    return clients[i].focus();
+                }
+            }
+            return self.clients.openWindow(url);
+        })
+    );
+});
