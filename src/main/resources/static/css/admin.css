@@ -1791,6 +1791,7 @@ tbody tr.row-active {
     border-bottom: 1px solid var(--border);
     text-decoration: none;
     color: inherit;
+    transition: background 0.15s;
 }
 
 .chat-room-item:hover {
@@ -1801,7 +1802,7 @@ tbody tr.row-active {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: var(--surface-raised);
+    background: linear-gradient(135deg, var(--accent) 0%, #12505f 100%);
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
@@ -1809,7 +1810,7 @@ tbody tr.row-active {
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    color: var(--muted);
+    color: #fff;
 }
 
 .chat-room-body {
@@ -1847,13 +1848,17 @@ tbody tr.row-active {
 }
 
 .chat-unread-badge {
-    background: var(--danger);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
     color: #fff;
     font-size: 11px;
     font-weight: 700;
     border-radius: var(--radius-pill);
-    padding: 2px 7px;
-    min-width: 18px;
+    padding: 0 5px;
+    min-width: 19px;
+    height: 19px;
     text-align: center;
 }
 
@@ -1866,10 +1871,10 @@ tbody tr.row-active {
 
 .chat-create-tab {
     flex: 1;
-    padding: 8px 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface-raised);
+    padding: 8px 4px 10px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
     color: var(--muted);
     font-size: 13px;
     font-weight: 600;
@@ -1877,9 +1882,8 @@ tbody tr.row-active {
 }
 
 .chat-create-tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
+    color: var(--accent);
+    border-bottom-color: var(--accent);
 }
 
 .chat-create-panel label {
@@ -1914,6 +1918,7 @@ tbody tr.row-active {
 .chat-bubble-row {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     max-width: 70%;
 }
 
@@ -1931,8 +1936,9 @@ tbody tr.row-active {
 .chat-bubble {
     background: var(--surface-raised);
     color: var(--text);
+    border: 1px solid var(--border);
     padding: 8px 13px;
-    border-radius: 16px;
+    border-radius: 16px 16px 16px 4px;
     font-size: 14px;
     line-height: 1.4;
     white-space: pre-wrap;
@@ -1942,6 +1948,8 @@ tbody tr.row-active {
 .chat-bubble-row.mine .chat-bubble {
     background: var(--accent);
     color: #fff;
+    border-color: transparent;
+    border-radius: 16px 16px 4px 16px;
 }
 
 .chat-bubble-file {
@@ -1963,8 +1971,15 @@ tbody tr.row-active {
 
 .chat-bubble-deleted {
     font-style: italic;
-    color: var(--muted) !important;
-    background: transparent !important;
+    color: var(--muted);
+    background: transparent;
+    border-style: dashed;
+}
+
+.chat-bubble-row.mine .chat-bubble-deleted {
+    background: transparent;
+    color: var(--muted);
+    border: 1px dashed var(--border);
 }
 
 .chat-bubble-actions {
@@ -2021,6 +2036,7 @@ tbody tr.row-active {
 
 .chat-input-bar {
     display: flex;
+    flex-direction: row;
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
@@ -2039,8 +2055,15 @@ tbody tr.row-active {
 }
 
 .chat-file-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--hover-bg);
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     flex-shrink: 0;
 }
 
@@ -2055,4 +2078,143 @@ tbody tr.row-active {
     padding: 10px 16px;
     margin-bottom: 14px;
     font-size: 13px;
+}
+
+/* ── 채팅 앱 셸(admin-shell 미사용, 사이드바 없는 풀스크린 모바일
+   레이아웃) — 색상은 하드코딩하지 않고 :root/[data-theme="dark"]에
+   이미 정의된 전역 변수를 그대로 물려받는다. 그래야 theme.js가
+   사이트 다른 화면에서 저장해둔 라이트/다크 설정을 채팅에도 자동으로
+   적용한다. */
+.chat-app {
+    min-height: 100vh;
+    height: 100vh;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: "Pretendard Variable", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+.chat-app-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* 채팅 목록 화면은 헤더 안에 자체 뒤로가기가 없고 대신 좌상단 고정
+   #login-back-btn을 재사용하는데, 그 버튼이 fixed라 헤더 타이틀과
+   같은 자리에서 겹친다 — 타이틀 쪽에 여유 공간을 띄워준다. */
+#login-back-btn + .chat-app-header .chat-app-title {
+    margin-left: 92px;
+}
+
+.chat-app-title {
+    flex: 1;
+    font-weight: 700;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-app-back {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.chat-app-header-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.chat-app-new-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+
+/* 채팅 목록: 관리자 table-card 대신 풀스크린 리스트로 재구성 */
+.chat-app .chat-push-banner {
+    margin: 14px 16px 0;
+    border-radius: 12px;
+}
+
+.chat-app .chat-room-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0 0;
+}
+
+.chat-app .chat-room-item {
+    padding: 13px 18px;
+}
+
+.chat-app .chat-room-avatar {
+    width: 46px;
+    height: 46px;
+}
+
+.chat-app .chat-room-name {
+    font-size: 14.5px;
+}
+
+.chat-app .empty {
+    margin: 40px auto;
+}
+
+/* 채팅방 화면 */
+.chat-app-room .chat-window {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-app-room .chat-messages {
+    padding: 18px 16px 8px;
+}
+
+.chat-app-room .chat-input-bar {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.chat-app .chat-input-bar #chat-text-input {
+    border-radius: 999px;
+    background: var(--surface-raised);
+}
+
+.chat-send-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

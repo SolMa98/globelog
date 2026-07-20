@@ -83,8 +83,8 @@ html, body {
 
 #globe-lang-toggle {
     position: absolute;
-    top: 64px;
-    right: 20px;
+    top: 20px;
+    right: 49px;
     z-index: 10;
     backdrop-filter: blur(6px);
 }
@@ -736,6 +736,7 @@ html, body {
     bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
+    transition: bottom 0.2s ease;
     font-size: 13px;
     color: #9aa3b2;
     background: rgba(10, 12, 20, 0.55);
@@ -771,10 +772,23 @@ html, body {
     position: absolute;
     bottom: 16px;
     left: 20px;
+    transition: bottom 0.2s ease;
     background: rgba(10, 12, 20, 0.55);
     padding: 8px 14px;
     border-radius: 20px;
     z-index: 10;
+}
+
+/* 지도 저작권 표기(우측 하단)는 기본적으로 (i) 아이콘으로 접혀있다가 클릭하면
+   펼쳐진다 — 접혀있을 때 비는 공간만큼 힌트/계정 위젯을 내려서 자연스럽게
+   채우고, 펼쳐지면 다시 그만큼 올려서 겹치지 않게 한다. globe.js가 저작권
+   표기의 펼침 상태를 감지해 #globe-view에 .attrib-expanded를 토글해준다. */
+#globe-view.attrib-expanded #hint {
+    bottom: 56px;
+}
+
+#globe-view.attrib-expanded #account-box {
+    bottom: 56px;
 }
 
 #account-box a {
@@ -1166,20 +1180,64 @@ html, body {
         max-height: 45vh;
     }
 
-    /* 검색 결과가 길어져도 겹치지 않도록 언어 토글을 상단이 아닌 하단(hint 위)으로 이동 */
-    #globe-lang-toggle {
-        top: auto;
-        bottom: 64px;
-        right: 12px;
+    /* 검색창이 전체 폭을 차지하면서 우측 상단 확대/축소(+/-) 컨트롤과
+       겹치므로, 검색창 아래로 내려서 자리를 겹치지 않게 한다. */
+    .maplibregl-ctrl-top-right {
+        top: 64px !important;
     }
 
+    /* 언어 토글이 확대/축소 버튼 왼쪽 같은 줄(top:64)에 있어서, 가운데 정렬되는
+       배지가 닉네임이 길면 그 자리와 겹칠 수 있다 — 아예 한 줄 아래로 내린다. */
+    #globe-owner-badge {
+        top: 104px;
+        max-width: calc(100vw - 24px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* 하단은 지도 저작권 표기(MapLibre attribution)가 좁은 화면에서 두 줄로
+       줄바꿈되며 실제로는 60px 넘게 차지한다 — 언어 토글까지 하단에 두면
+       거기서 또 겹치므로, 확대/축소 버튼과 같은 줄의 왼쪽에 둔다. */
+    #globe-lang-toggle {
+        top: 64px;
+        right: 49px;
+    }
+
+    /* 저작권 표기는 기본적으로 (i) 아이콘 하나만큼만 차지하므로, 힌트는
+       그 위에 최소한으로만 띄운다. 펼쳐지면 아래 .attrib-expanded 규칙이
+       더 큰 값으로 덮어써서 다시 올라간다. */
     #hint {
-        bottom: 8px;
+        bottom: 42px;
         font-size: 11px;
         padding: 6px 10px;
         max-width: calc(100vw - 24px);
         text-align: center;
         white-space: normal;
+    }
+
+    /* 로그인 위젯(닉네임·내여행·내통계·보안·로그아웃 링크 목록)이 폭 제한 없이
+       한 줄로 쭉 이어져서 하단 힌트/지도 저작권 표기와 겹치던 문제를 고쳐준다.
+       힌트보다 한 단 더 위에 배치해서 저작권 표기·힌트·계정위젯이 아래에서
+       위로 겹치지 않게 쌓이게 한다. */
+    #globe-view #account-box {
+        left: 12px;
+        right: 12px;
+        bottom: 86px;
+        flex-wrap: wrap;
+        row-gap: 4px;
+        font-size: 11px;
+        justify-content: center;
+    }
+
+    /* 저작권 표기가 펼쳐지면(두 줄로 줄바꿈되며 60px 넘게 차지) 힌트/계정
+       위젯을 그만큼 위로 밀어올려 겹치지 않게 한다. */
+    #globe-view.attrib-expanded #hint {
+        bottom: 70px;
+    }
+
+    #globe-view.attrib-expanded #account-box {
+        bottom: 116px;
     }
 
     #map-topbar {

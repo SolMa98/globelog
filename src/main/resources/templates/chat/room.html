@@ -8,34 +8,27 @@
     <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
-<body class="admin-body">
-<div class="admin-shell">
-<main class="page chat-room-page">
-    <div class="content-topbar">
-        <nav class="breadcrumb">
-            <a th:href="@{/my/chat}">← 채팅 목록</a>
-            <span class="breadcrumb-sep">›</span>
-            <span id="chat-room-title">불러오는 중...</span>
-        </nav>
-        <div class="content-topbar-actions">
-            <button type="button" id="chat-invite-btn" class="btn btn-secondary btn-sm" style="display:none">+ 초대</button>
-            <button type="button" id="chat-leave-btn" class="btn btn-ghost btn-sm" style="display:none">나가기</button>
-        </div>
+<body class="chat-app chat-app-room">
+<header class="chat-app-header">
+    <a th:href="@{/my/chat}" class="chat-app-back" aria-label="채팅 목록으로">←</a>
+    <span class="chat-app-title" id="chat-room-title">불러오는 중...</span>
+    <div class="chat-app-header-actions">
+        <button type="button" id="chat-invite-btn" class="btn btn-secondary btn-sm" style="display:none">+ 초대</button>
+        <button type="button" id="chat-leave-btn" class="btn btn-ghost btn-sm" style="display:none">나가기</button>
     </div>
+</header>
 
-    <div class="chat-window card">
-        <div class="chat-messages" id="chat-messages"></div>
-        <form id="chat-send-form" class="chat-input-bar">
-            <input type="hidden" id="chat-room-id" th:value="${roomId}">
-            <label class="chat-file-btn" aria-label="파일 첨부">
-                📎
-                <input type="file" id="chat-file-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" hidden>
-            </label>
-            <input type="text" id="chat-text-input" placeholder="메시지를 입력하세요" autocomplete="off">
-            <button type="submit" class="btn btn-primary btn-sm">전송</button>
-        </form>
-    </div>
-</main>
+<div class="chat-window">
+    <div class="chat-messages" id="chat-messages"></div>
+    <form id="chat-send-form" class="chat-input-bar">
+        <input type="hidden" id="chat-room-id" th:value="${roomId}">
+        <label class="chat-file-btn" aria-label="파일 첨부">
+            📎
+            <input type="file" id="chat-file-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" hidden>
+        </label>
+        <input type="text" id="chat-text-input" placeholder="메시지를 입력하세요" autocomplete="off">
+        <button type="submit" class="chat-send-btn" aria-label="전송">➤</button>
+    </form>
 </div>
 
 <!-- ── 멤버 초대 모달(그룹방 전용) ────────────────────────────── -->
@@ -63,5 +56,6 @@
 <script th:src="@{/js/csrf.js}"></script>
 <script th:src="@{/js/vendor/stomp.umd.min.js}"></script>
 <script th:src="@{/js/chat-room.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
 </body>
 </html>

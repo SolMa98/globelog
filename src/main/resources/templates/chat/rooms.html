@@ -8,33 +8,18 @@
     <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
-<body class="admin-body">
-<div class="admin-shell">
-<main class="page">
-    <div class="content-topbar">
-        <nav class="breadcrumb">
-            <a th:href="@{/}">← 피드로</a>
-            <span class="breadcrumb-sep">›</span>
-            <span>채팅</span>
-        </nav>
-        <div class="content-topbar-actions">
-            <button type="button" id="open-chat-create" class="btn btn-primary btn-sm">+ 새 대화</button>
-            <button type="button" id="theme-toggle-btn" class="btn-icon" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
-        </div>
-    </div>
-    <div class="chat-push-banner" id="chat-push-banner" style="display:none">
-        <span>🔔 새 메시지가 오면 브라우저 알림을 받아보세요.</span>
-        <button type="button" id="chat-push-enable-btn" class="btn btn-secondary btn-sm">알림 켜기</button>
-    </div>
-    <div class="table-card">
-        <div class="list-toolbar">
-            <h2 class="list-toolbar-title">대화 목록</h2>
-        </div>
-        <ul class="chat-room-list" id="chat-room-list"></ul>
-        <p class="empty" id="chat-room-empty" style="display:none">아직 대화가 없습니다. "+ 새 대화"로 시작해보세요.</p>
-    </div>
-</main>
+<body class="chat-app">
+<a th:href="@{/}" id="login-back-btn">← 피드로</a>
+<header class="chat-app-header">
+    <span class="chat-app-title">채팅</span>
+    <button type="button" id="open-chat-create" class="chat-app-new-btn" aria-label="새 대화">+</button>
+</header>
+<div class="chat-push-banner" id="chat-push-banner" style="display:none">
+    <span>🔔 새 메시지가 오면 브라우저 알림을 받아보세요.</span>
+    <button type="button" id="chat-push-enable-btn" class="btn btn-secondary btn-sm">알림 켜기</button>
 </div>
+<ul class="chat-room-list" id="chat-room-list"></ul>
+<p class="empty" id="chat-room-empty" style="display:none">아직 대화가 없습니다. "+" 버튼으로 새 대화를 시작해보세요.</p>
 
 <!-- ── 새 대화 시작 모달 ────────────────────────────── -->
 <div id="chat-create-modal" class="modal-backdrop">

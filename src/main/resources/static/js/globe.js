@@ -59,11 +59,47 @@
             zoom: initialZoom,
             center: [127, 20],
             renderWorldCopies: false,
-            attributionControl: true
+            attributionControl: false
         });
 
+        // 지도 저작권 표기는 기본적으로 (i) 아이콘으로 접어두고(compact: true 고정),
+        // 클릭해서 펼쳤을 때만 전체 문구를 보여준다. 화면 폭에 따라 라이브러리가
+        // 알아서 접고 펴는 "auto" 동작에 맡기면 일부 폭에서는 항상 펼쳐진 채로
+        // 나와 힌트/계정 위젯과 겹치므로 명시적으로 강제한다.
+        globeMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
         globeMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
         globeMap.on('load', onMapLoad);
+        watchAttributionExpanded();
+    }
+
+    // 저작권 표기가 접혀있을 땐 그만큼 화면 하단이 비므로 힌트/계정 위젯을
+    // 아래로 내려주고, 펼쳐지면 다시 위로 올려 겹치지 않게 한다.
+    function watchAttributionExpanded() {
+        var attribEl = document.querySelector('.maplibregl-ctrl-attrib');
+        if (!attribEl) return;
+
+        var globeViewEl = document.getElementById('globe-view');
+        // MapLibre는 compact:true여도 지도 소스가 로드되면서 저작권 문구가
+        // 채워지는 시점에 한 번 자동으로 펼쳤다가, 사용자가 지도를 드래그해야
+        // 접어주는 게 기본 동작이다(비동기라 addControl 직후에 강제로 접어봐야
+        // 소용없음). 우리는 처음부터 접힌 상태로 시작하길 원하므로, 그 최초
+        // 1회의 자동 펼침만 감지해서 즉시 다시 접고, 이후 사용자가 직접
+        // 클릭해서 펼치는 건 그대로 둔다.
+        var forcedInitialCollapse = false;
+        var sync = function () {
+            globeViewEl.classList.toggle('attrib-expanded', attribEl.classList.contains('maplibregl-compact-show'));
+        };
+        var observer = new MutationObserver(function () {
+            if (!forcedInitialCollapse && attribEl.classList.contains('maplibregl-compact-show')) {
+                forcedInitialCollapse = true;
+                attribEl.classList.remove('maplibregl-compact-show');
+                attribEl.removeAttribute('open');
+                return; // 위 두 줄이 또 mutation을 발생시켜 sync가 다시 호출된다
+            }
+            sync();
+        });
+        sync();
+        observer.observe(attribEl, { attributes: true, attributeFilter: ['class'] });
     }
 
     // ── 폴리곤 형식 통일 (GeoJSON Polygon/MultiPolygon → 폴리곤 배열) ──
