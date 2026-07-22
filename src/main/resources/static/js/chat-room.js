@@ -8,9 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var sendForm = document.getElementById('chat-send-form');
     var textInput = document.getElementById('chat-text-input');
     var fileInput = document.getElementById('chat-file-input');
-    var inviteModal = document.getElementById('chat-invite-modal');
-    var inviteInput = document.getElementById('chat-invite-nickname');
-    var inviteSubmitBtn = document.getElementById('chat-invite-submit');
 
     var myUserId = null;
     var myProfileImageUrl = null;
@@ -310,29 +307,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!res.ok) return readErrorMessage(res, '파일 전송에 실패했습니다.').then(function (msg) { AdminModal.showError(msg); });
             })
             .catch(function () { AdminModal.showError(); });
-    });
-
-    if (inviteBtn) {
-        inviteBtn.addEventListener('click', function () {
-            inviteInput.value = '';
-            AdminModal.open(inviteModal);
-        });
-    }
-    inviteSubmitBtn.addEventListener('click', function () {
-        var nickname = inviteInput.value.trim();
-        if (!nickname) { AdminModal.showError('닉네임을 입력해주세요.'); return; }
-        jsonFetch('/api/chat/rooms/' + roomId + '/invite', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname: nickname })
-        }).then(function (res) {
-            if (res.ok) {
-                AdminModal.close(inviteModal);
-                Swal.fire({ icon: 'success', title: '초대했습니다.', timer: 1200, showConfirmButton: false });
-            } else {
-                return readErrorMessage(res, '초대에 실패했습니다.').then(function (msg) { AdminModal.showError(msg); });
-            }
-        }).catch(function () { AdminModal.showError(); });
     });
 
     if (leaveBtn) {

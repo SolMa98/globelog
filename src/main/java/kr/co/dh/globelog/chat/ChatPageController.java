@@ -26,4 +26,11 @@ public class ChatPageController {
         model.addAttribute("roomId", roomId);
         return "chat/room";
     }
+
+    // 그룹방 "+초대"도 같은 이유로 모달 대신 전용 화면으로 뺐다.
+    @GetMapping("/my/chat/{roomId}/invite")
+    public String invite(@PathVariable Long roomId, Model model) {
+        model.addAttribute("roomId", roomId);
+        return "chat/invite";
+    }
 }

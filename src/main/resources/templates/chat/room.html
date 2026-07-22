@@ -14,7 +14,7 @@
     <div class="chat-app-avatar" id="chat-room-avatar"></div>
     <span class="chat-app-title" id="chat-room-title">불러오는 중...</span>
     <div class="chat-app-header-actions">
-        <button type="button" id="chat-invite-btn" class="btn btn-secondary btn-sm" style="display:none">+ 초대</button>
+        <a th:href="@{/my/chat/{id}/invite(id=${roomId})}" id="chat-invite-btn" class="btn btn-secondary btn-sm" style="display:none">+ 초대</a>
         <button type="button" id="chat-leave-btn" class="btn btn-ghost btn-sm" style="display:none">나가기</button>
     </div>
 </header>
@@ -30,26 +30,6 @@
         <input type="text" id="chat-text-input" placeholder="메시지를 입력하세요" autocomplete="off">
         <button type="submit" class="chat-send-btn" aria-label="전송">➤</button>
     </form>
-</div>
-
-<!-- ── 멤버 초대 모달(그룹방 전용) ────────────────────────────── -->
-<div id="chat-invite-modal" class="modal-backdrop">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>멤버 초대</h2>
-            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
-        </div>
-        <div class="modal-body">
-            <label>
-                초대할 닉네임
-                <input type="text" id="chat-invite-nickname" placeholder="닉네임을 입력하세요">
-            </label>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
-            <button type="button" id="chat-invite-submit" class="btn btn-primary">초대하기</button>
-        </div>
-    </div>
 </div>
 
 <script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>

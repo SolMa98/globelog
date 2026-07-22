@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 멤버 초대</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="chat-app chat-app-new">
+<input type="hidden" id="chat-invite-room-id" th:value="${roomId}">
+<header class="chat-app-header">
+    <a th:href="@{/my/chat/{id}(id=${roomId})}" class="chat-app-back" aria-label="채팅방으로">←</a>
+    <span class="chat-app-title">멤버 초대</span>
+</header>
+
+<div class="chat-new-body">
+    <input type="text" id="chat-invite-search" class="chat-user-search-input" placeholder="닉네임으로 검색">
+    <div class="chat-user-list-label" id="chat-invite-list-label">팔로잉</div>
+    <ul class="chat-user-list" id="chat-invite-list"></ul>
+</div>
+
+<div class="chat-new-footer">
+    <button type="button" id="chat-invite-submit" class="btn btn-primary btn-block">초대하기</button>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/chat-user-picker.js}"></script>
+<script th:src="@{/js/chat-invite.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>
