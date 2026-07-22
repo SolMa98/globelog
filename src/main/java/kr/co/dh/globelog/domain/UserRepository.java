@@ -19,6 +19,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByIdentityDiHash(String identityDiHash);
 
-    Page<User> findByNicknameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-            String nickname, String email, Pageable pageable);
+    Page<User> findByNicknameContainingIgnoreCase(String nickname, Pageable pageable);
 }

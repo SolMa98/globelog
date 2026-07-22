@@ -159,7 +159,10 @@
       "Bash(mkdir -p /private/tmp/claude-501/-Users-cnai01-Documents-work-side/749ecf4d-7149-4162-9495-5cbd4455dec7/scratchpad)",
       "Bash(break)",
       "Bash(./gradlew compileJava processResources -q)",
-      "Bash(pkill -f GlobelogApplication)"
+      "Bash(pkill -f GlobelogApplication)",
+      "Bash(find / -maxdepth 6 -type d -iname \"*globelog*\")",
+      "Bash(find / -path \"*/kr/co/dh/globelog/domain/User.java\")",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep -n -i \"profileImageUrl\\\\|avatar\" {}')"
     ]
   }
 }

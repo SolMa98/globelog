@@ -1,5 +1,6 @@
 package kr.co.dh.globelog.profile;
 
+import java.util.List;
 import java.util.Optional;
 import kr.co.dh.globelog.domain.Follow;
 import kr.co.dh.globelog.domain.FollowRepository;
@@ -7,6 +8,7 @@ import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
 import kr.co.dh.globelog.security.CurrentUserResolver;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -57,6 +60,33 @@ public class ProfileController {
     @ResponseBody
     public UserProfileResponse profile(@PathVariable String nickname, Authentication authentication) {
         return buildResponse(findUserOrThrow(nickname), authentication);
+    }
+
+    // 채팅 "새 대화 시작" 검색용 — 닉네임 부분일치 검색. 이메일은 검색 대상에서 제외해
+    // 이메일 주소로 계정을 알아내는 용도로 악용되지 않게 한다.
+    @GetMapping("/api/users/search")
+    @ResponseBody
+    public List<UserSummaryResponse> search(@RequestParam String q, Authentication authentication) {
+        User viewer = requireLoggedIn(authentication);
+        String query = q.trim();
+        if (query.isEmpty()) {
+            return List.of();
+        }
+        return userRepository.findByNicknameContainingIgnoreCase(query, PageRequest.of(0, 20)).stream()
+                .filter(u -> !u.getId().equals(viewer.getId()))
+                .map(ProfileController::toSummary)
+                .toList();
+    }
+
+    @GetMapping("/api/users/{nickname}/following")
+    @ResponseBody
+    public List<UserSummaryResponse> following(@PathVariable String nickname, Authentication authentication) {
+        requireLoggedIn(authentication);
+        User target = findUserOrThrow(nickname);
+        return followRepository.findByFollowerId(target.getId()).stream()
+                .map(Follow::getFollowee)
+                .map(ProfileController::toSummary)
+                .toList();
     }
 
     @PostMapping("/api/users/{nickname}/follow")
@@ -106,5 +136,9 @@ public class ProfileController {
         return new UserProfileResponse(target.getId(), target.getNickname(), target.getProfileImageUrl(),
                 target.getBio(), followerCount, followingCount, tripCount, visitedCountryCount,
                 target.getCreatedAt().getYear(), isFollowing, isSelf);
+    }
+
+    private static UserSummaryResponse toSummary(User user) {
+        return new UserSummaryResponse(user.getId(), user.getNickname(), user.getProfileImageUrl());
     }
 }

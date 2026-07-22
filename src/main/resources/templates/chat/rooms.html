@@ -35,20 +35,19 @@
                 <button type="button" class="chat-create-tab" data-tab="self">나와의 채팅</button>
             </div>
             <div class="chat-create-panel" data-panel="direct">
-                <label>
-                    상대방 닉네임
-                    <input type="text" id="chat-direct-nickname" placeholder="닉네임을 입력하세요">
-                </label>
+                <input type="text" id="chat-direct-search" class="chat-user-search-input" placeholder="닉네임으로 검색">
+                <div class="chat-user-list-label" id="chat-direct-list-label">팔로잉</div>
+                <ul class="chat-user-list" id="chat-direct-list"></ul>
             </div>
             <div class="chat-create-panel" data-panel="group" style="display:none">
                 <label>
                     방 이름
                     <input type="text" id="chat-group-name" placeholder="예: 여행 동행 모임">
                 </label>
-                <label>
-                    초대할 멤버 닉네임 <span class="muted" style="font-weight:400;font-size:12px">(쉼표로 구분)</span>
-                    <input type="text" id="chat-group-members" placeholder="예: alice, bob">
-                </label>
+                <div class="chat-selected-chips" id="chat-group-selected"></div>
+                <input type="text" id="chat-group-search" class="chat-user-search-input" placeholder="초대할 멤버를 닉네임으로 검색">
+                <div class="chat-user-list-label" id="chat-group-list-label">팔로잉</div>
+                <ul class="chat-user-list" id="chat-group-list"></ul>
             </div>
             <div class="chat-create-panel" data-panel="self" style="display:none">
                 <p class="muted">나만 볼 수 있는 개인 채팅방입니다. 메모장처럼 사용해보세요.</p>
