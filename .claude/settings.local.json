@@ -162,7 +162,8 @@
       "Bash(pkill -f GlobelogApplication)",
       "Bash(find / -maxdepth 6 -type d -iname \"*globelog*\")",
       "Bash(find / -path \"*/kr/co/dh/globelog/domain/User.java\")",
-      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep -n -i \"profileImageUrl\\\\|avatar\" {}')"
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep -n -i \"profileImageUrl\\\\|avatar\" {}')",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat {}')"
     ]
   }
 }

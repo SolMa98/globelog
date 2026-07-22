@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var roomId = Number(document.getElementById('chat-room-id').value);
     var messagesEl = document.getElementById('chat-messages');
     var titleEl = document.getElementById('chat-room-title');
+    var avatarEl = document.getElementById('chat-room-avatar');
     var inviteBtn = document.getElementById('chat-invite-btn');
     var leaveBtn = document.getElementById('chat-leave-btn');
     var sendForm = document.getElementById('chat-send-form');
@@ -12,9 +13,33 @@ document.addEventListener('DOMContentLoaded', function () {
     var inviteSubmitBtn = document.getElementById('chat-invite-submit');
 
     var myUserId = null;
+    var myProfileImageUrl = null;
+    var roomType = null;
     var oldestId = null;
     var loadingOlder = false;
     var reachedStart = false;
+
+    // 연속된 메시지가 같은 발신자로부터 5분 이내에 온 것이면 한 그룹으로 묶어
+    // 붙여보이게 한다(인스타그램 DM 스타일) — 매번 이름/여백을 반복하지 않는다.
+    var GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+    function isGroupedWithPrev(prevRow, message) {
+        if (!prevRow) return false;
+        if (Number(prevRow.dataset.senderId) !== message.senderId) return false;
+        var prevTime = new Date(prevRow.dataset.createdAt).getTime();
+        var curTime = new Date(message.createdAt).getTime();
+        return Math.abs(curTime - prevTime) < GROUP_WINDOW_MS;
+    }
+
+    function renderAvatarEl(el, url, fallbackText) {
+        if (url) {
+            el.style.backgroundImage = 'url("' + url + '")';
+            el.textContent = '';
+        } else {
+            el.style.backgroundImage = '';
+            el.textContent = (fallbackText || '?').charAt(0).toUpperCase();
+        }
+    }
 
     function jsonFetch(url, options) {
         return GlobelogCsrf.fetch().then(function (auth) {
@@ -43,18 +68,29 @@ document.addEventListener('DOMContentLoaded', function () {
     // 서버가 broadcast로 실어보내는 메시지는 "누가 보냈든 그 발신자 기준"으로 만든 것이라
     // self 필드를 그대로 믿을 수 없다(모든 구독자에게 같은 페이로드가 나가므로). 그래서
     // 화면에서는 항상 senderId를 내 user id와 직접 비교해서 판정한다.
-    function buildBubble(message) {
+    function buildBubble(message, groupedWithPrev) {
         var row = document.createElement('div');
         var mine = message.senderId === myUserId;
-        row.className = 'chat-bubble-row' + (mine ? ' mine' : '');
+        row.className = 'chat-bubble-row' + (mine ? ' mine' : '') + (groupedWithPrev ? ' grouped' : '');
         row.dataset.messageId = message.id;
+        row.dataset.senderId = message.senderId;
+        row.dataset.createdAt = message.createdAt;
 
-        if (!mine) {
+        // 1:1/나와의 채팅은 헤더에 이미 상대가 누군지 나와있어 이름이 불필요하고,
+        // 그룹 채팅에서도 같은 그룹으로 묶인 두 번째 메시지부터는 이름을 반복하지 않는다.
+        if (!mine && roomType === 'GROUP' && !groupedWithPrev) {
             var sender = document.createElement('div');
             sender.className = 'chat-bubble-sender';
             sender.textContent = message.senderNickname;
             row.appendChild(sender);
         }
+
+        // 시간/수정·삭제 버튼은 기본으로 숨겨두고, 말풍선을 탭(또는 호버)하면 펼쳐 보여준다
+        // (인스타그램처럼 항상 노출하지 않아 목록이 덜 산만하게).
+        row.addEventListener('click', function (e) {
+            if (e.target.closest('a') || e.target.closest('.chat-bubble-edit-form')) return;
+            row.classList.toggle('expanded');
+        });
 
         renderBubbleContent(row, message, mine);
         return row;
@@ -167,7 +203,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function appendMessage(message) {
-        messagesEl.appendChild(buildBubble(message));
+        var grouped = isGroupedWithPrev(messagesEl.lastElementChild, message);
+        messagesEl.appendChild(buildBubble(message, grouped));
         messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
@@ -180,7 +217,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function prependMessages(messages) {
         var prevHeight = messagesEl.scrollHeight;
         var fragment = document.createDocumentFragment();
-        messages.forEach(function (m) { fragment.appendChild(buildBubble(m)); });
+        var prevRow = null;
+        messages.forEach(function (m) {
+            var row = buildBubble(m, isGroupedWithPrev(prevRow, m));
+            fragment.appendChild(row);
+            prevRow = row;
+        });
         messagesEl.insertBefore(fragment, messagesEl.firstChild);
         messagesEl.scrollTop = messagesEl.scrollHeight - prevHeight;
     }
@@ -210,6 +252,17 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadDetail() {
         return fetch('/api/chat/rooms/' + roomId).then(function (res) { return res.json(); }).then(function (detail) {
             titleEl.textContent = detail.displayName;
+            roomType = detail.type;
+
+            var avatarUrl = null;
+            if (detail.type === 'SELF') {
+                avatarUrl = myProfileImageUrl;
+            } else if (detail.type === 'DIRECT') {
+                var other = detail.members.find(function (m) { return m.userId !== myUserId; });
+                avatarUrl = other ? other.profileImageUrl : null;
+            }
+            renderAvatarEl(avatarEl, avatarUrl, detail.displayName);
+
             if (detail.type === 'GROUP') {
                 inviteBtn.style.display = '';
                 leaveBtn.style.display = '';
@@ -298,6 +351,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(function (res) { return res.json(); })
         .then(function (me) {
             myUserId = me.id;
+            myProfileImageUrl = me.profileImageUrl;
             return Promise.all([loadDetail(), loadHistory(null)]);
         })
         .then(markRead)
