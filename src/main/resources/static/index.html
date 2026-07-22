@@ -17,7 +17,10 @@
 <div id="feed-view">
     <header id="feed-header">
         <h1><img src="/favicon.svg" alt="" width="24" height="24" style="vertical-align:-5px;margin-right:6px">Globelog</h1>
-        <div id="account-box"></div>
+        <div id="feed-header-actions">
+            <button type="button" id="theme-toggle-btn" aria-label="테마 전환"><span id="theme-toggle-icon">☀️</span></button>
+            <div id="account-box"></div>
+        </div>
     </header>
 
     <div id="feed-hero" class="hidden">
@@ -71,6 +74,7 @@
 <script src="/js/auth.js"></script>
 <script src="/js/feed.js"></script>
 <script src="/js/pwa.js"></script>
+<script src="/js/theme.js"></script>
 <script>
 (function () {
     // 하단 네비게이션의 "지구본"/"내 여행"/"프로필" 링크는 로그인한 사용자에게만

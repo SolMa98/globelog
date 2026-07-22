@@ -2204,6 +2204,35 @@ tbody tr.row-active {
     background: var(--surface-raised);
 }
 
+/* 채팅 스크롤 영역(메시지 목록/방 목록) 전용 스크롤바 — 브라우저 기본
+   스크롤바 대신 테마 변수를 그대로 쓰는 얇은 바로 대체한다. */
+.chat-messages,
+.chat-app .chat-room-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) transparent;
+}
+
+.chat-messages::-webkit-scrollbar,
+.chat-app .chat-room-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track,
+.chat-app .chat-room-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb,
+.chat-app .chat-room-list::-webkit-scrollbar-thumb {
+    background-color: var(--muted);
+    border-radius: 999px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.chat-app .chat-room-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text);
+}
+
 .chat-send-btn {
     flex-shrink: 0;
     width: 36px;
