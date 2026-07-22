@@ -2305,6 +2305,7 @@ tbody tr.row-active {
     background: var(--accent);
     color: #fff;
     border: none;
+    text-decoration: none;
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
@@ -2314,6 +2315,28 @@ tbody tr.row-active {
     justify-content: center;
     line-height: 1;
     padding: 0;
+}
+
+/* "새 대화" 전용 화면 — 카카오톡/인스타그램처럼 모달이 아니라 화면 전환으로 연다 */
+.chat-app-new {
+    animation: chatNewSlideIn 0.2s ease;
+}
+
+@keyframes chatNewSlideIn {
+    from { transform: translateX(24px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.chat-new-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+.chat-new-footer {
+    flex-shrink: 0;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
 }
 
 /* 채팅 목록: 관리자 table-card 대신 풀스크린 리스트로 재구성 */

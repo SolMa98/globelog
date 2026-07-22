@@ -163,7 +163,12 @@
       "Bash(find / -maxdepth 6 -type d -iname \"*globelog*\")",
       "Bash(find / -path \"*/kr/co/dh/globelog/domain/User.java\")",
       "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep -n -i \"profileImageUrl\\\\|avatar\" {}')",
-      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat {}')"
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat {}')",
+      "Bash(find / -maxdepth 8 -iname \"rooms.html\" -not -path \"*/node_modules/*\")",
+      "Bash(find / -maxdepth 8 -iname \"admin-modal.js\" -not -path \"*/node_modules/*\")",
+      "Bash(find / -iname \"rooms.html\" -not -path \"*/node_modules/*\")",
+      "Bash(find / -iname \"admin-modal.js\" -not -path \"*/node_modules/*\")",
+      "Bash(find / -iname \"pom.xml\" -not -path \"*/node_modules/*\")"
     ]
   }
 }

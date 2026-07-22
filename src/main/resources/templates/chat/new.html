@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Globelog · 새 대화</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/vendor/sweetalert2.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="chat-app chat-app-new">
+<header class="chat-app-header">
+    <a th:href="@{/my/chat}" class="chat-app-back" aria-label="채팅 목록으로">←</a>
+    <span class="chat-app-title">새 대화</span>
+</header>
+
+<div class="chat-new-body">
+    <div class="chat-create-tabs">
+        <button type="button" class="chat-create-tab active" data-tab="direct">1:1 대화</button>
+        <button type="button" class="chat-create-tab" data-tab="group">그룹 채팅</button>
+        <button type="button" class="chat-create-tab" data-tab="self">나와의 채팅</button>
+    </div>
+    <div class="chat-create-panel" data-panel="direct">
+        <input type="text" id="chat-direct-search" class="chat-user-search-input" placeholder="닉네임으로 검색">
+        <div class="chat-user-list-label" id="chat-direct-list-label">팔로잉</div>
+        <ul class="chat-user-list" id="chat-direct-list"></ul>
+    </div>
+    <div class="chat-create-panel" data-panel="group" style="display:none">
+        <label>
+            방 이름
+            <input type="text" id="chat-group-name" placeholder="예: 여행 동행 모임">
+        </label>
+        <div class="chat-selected-chips" id="chat-group-selected"></div>
+        <input type="text" id="chat-group-search" class="chat-user-search-input" placeholder="초대할 멤버를 닉네임으로 검색">
+        <div class="chat-user-list-label" id="chat-group-list-label">팔로잉</div>
+        <ul class="chat-user-list" id="chat-group-list"></ul>
+    </div>
+    <div class="chat-create-panel" data-panel="self" style="display:none">
+        <p class="muted">나만 볼 수 있는 개인 채팅방입니다. 메모장처럼 사용해보세요.</p>
+    </div>
+</div>
+
+<div class="chat-new-footer">
+    <button type="button" id="chat-create-submit" class="btn btn-primary btn-block">시작하기</button>
+</div>
+
+<script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/chat-new.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

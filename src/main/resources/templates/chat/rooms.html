@@ -12,7 +12,7 @@
 <a th:href="@{/}" id="login-back-btn">← 피드로</a>
 <header class="chat-app-header">
     <span class="chat-app-title">채팅</span>
-    <button type="button" id="open-chat-create" class="chat-app-new-btn" aria-label="새 대화">+</button>
+    <a th:href="@{/my/chat/new}" class="chat-app-new-btn" aria-label="새 대화">+</a>
 </header>
 <div class="chat-push-banner" id="chat-push-banner" style="display:none">
     <span>🔔 새 메시지가 오면 브라우저 알림을 받아보세요.</span>
@@ -20,45 +20,6 @@
 </div>
 <ul class="chat-room-list" id="chat-room-list"></ul>
 <p class="empty" id="chat-room-empty" style="display:none">아직 대화가 없습니다. "+" 버튼으로 새 대화를 시작해보세요.</p>
-
-<!-- ── 새 대화 시작 모달 ────────────────────────────── -->
-<div id="chat-create-modal" class="modal-backdrop">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>새 대화 시작</h2>
-            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="chat-create-tabs">
-                <button type="button" class="chat-create-tab active" data-tab="direct">1:1 대화</button>
-                <button type="button" class="chat-create-tab" data-tab="group">그룹 채팅</button>
-                <button type="button" class="chat-create-tab" data-tab="self">나와의 채팅</button>
-            </div>
-            <div class="chat-create-panel" data-panel="direct">
-                <input type="text" id="chat-direct-search" class="chat-user-search-input" placeholder="닉네임으로 검색">
-                <div class="chat-user-list-label" id="chat-direct-list-label">팔로잉</div>
-                <ul class="chat-user-list" id="chat-direct-list"></ul>
-            </div>
-            <div class="chat-create-panel" data-panel="group" style="display:none">
-                <label>
-                    방 이름
-                    <input type="text" id="chat-group-name" placeholder="예: 여행 동행 모임">
-                </label>
-                <div class="chat-selected-chips" id="chat-group-selected"></div>
-                <input type="text" id="chat-group-search" class="chat-user-search-input" placeholder="초대할 멤버를 닉네임으로 검색">
-                <div class="chat-user-list-label" id="chat-group-list-label">팔로잉</div>
-                <ul class="chat-user-list" id="chat-group-list"></ul>
-            </div>
-            <div class="chat-create-panel" data-panel="self" style="display:none">
-                <p class="muted">나만 볼 수 있는 개인 채팅방입니다. 메모장처럼 사용해보세요.</p>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
-            <button type="button" id="chat-create-submit" class="btn btn-primary">시작하기</button>
-        </div>
-    </div>
-</div>
 
 <script th:src="@{/js/vendor/sweetalert2.all.min.js}"></script>
 <script th:src="@{/js/admin-modal.js}"></script>
