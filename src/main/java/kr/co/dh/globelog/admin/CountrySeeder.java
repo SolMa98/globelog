@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,8 +17,11 @@ import org.springframework.stereotype.Component;
  * 넣는다 — "관리자가 하나씩 등록해야 여행을 남길 수 있는" 방식에서 "기본적으로 전부
  * 오픈, 관리자는 예외적으로 차단만" 방식으로 전환하기 위함(2026-07-07 확정).
  * 이미 있는 행은 절대 건드리지 않고 없는 것만 추가하므로 재부팅해도 안전(idempotent).
+ *
+ * RegionSeeder가 국가 존재를 전제로 하므로(country_id FK) @Order(1)로 먼저 실행되게 한다.
  */
 @Component
+@Order(1)
 public class CountrySeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(CountrySeeder.class);

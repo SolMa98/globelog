@@ -62,6 +62,7 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 기본적으로 `http://localhost:15790`에서 서비스가 뜹니다(`SERVER_PORT` 환경변수로 변경 가능). 첫 기동 시 다음이 자동으로 준비됩니다:
 - 관리자 계정 생성(계정: `admin` / 비밀번호: `changeme123`). 이 계정은 `must_change_password` 플래그가 켜진 채로 만들어져서, 최초 로그인 시 `/admin/change-password`로 강제 이동되고 비밀번호를 바꾸기 전까지는 다른 어드민 화면에 들어갈 수 없음(신규 관리자 계정을 추가로 만들 때도 동일하게 적용됨). 배포 시에는 `ADMIN_BOOTSTRAP_PASSWORD` 환경변수로 최초 비밀번호 자체도 바꿀 수 있음 — 단, 이미 계정이 생성된 이후에는 이 값을 바꿔도 기존 비밀번호에 영향 없음
 - 전세계 236개국 국가 마스터 데이터 자동 등록(`countries-ref.json` 기반, 이미 등록된 국가는 건드리지 않고 없는 것만 채움 — 재기동해도 안전)
+- 국가별 시/도 지역 마스터 데이터 약 4,500건 자동 등록(`provinces.json` 기반, 국가와 동일한 방식으로 안전하게 재기동 가능). 국가와 마찬가지로 기본은 전부 열려있고, 관리자가 `/admin/regions`에서 특정 지역만 예외적으로 차단할 수 있음
 
 ### 3-1. Docker로 실행하기 (앱 + MariaDB 한 번에)
 
