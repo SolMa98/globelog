@@ -182,7 +182,10 @@
       "Bash(git commit *)",
       "Bash(rm -f /private/tmp/claude-501/-Users-cnai01-Documents-work-side/bf24d5c2-ea1f-40db-a69f-39a83bcd1ab6/scratchpad/cj*.txt)",
       "Bash(rm -f /tmp/out.html /tmp/countries.html /tmp/cp2.html /tmp/filtered.html /tmp/filtered2.html)",
-      "Bash(docker volume *)"
+      "Bash(docker volume *)",
+      "Bash(rm -f /private/tmp/claude-501/-Users-cnai01-Documents-work-side/bf24d5c2-ea1f-40db-a69f-39a83bcd1ab6/scratchpad/puppet/*.png)",
+      "Bash(rm -f /private/tmp/claude-501/-Users-cnai01-Documents-work-side/bf24d5c2-ea1f-40db-a69f-39a83bcd1ab6/scratchpad/puppet/*.xlsx)",
+      "Bash(rm -f /private/tmp/claude-501/-Users-cnai01-Documents-work-side/bf24d5c2-ea1f-40db-a69f-39a83bcd1ab6/scratchpad/cjY.txt)"
     ]
   }
 }

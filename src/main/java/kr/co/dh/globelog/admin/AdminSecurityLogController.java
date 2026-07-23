@@ -12,6 +12,7 @@ import kr.co.dh.globelog.domain.SecurityEventCategory;
 import kr.co.dh.globelog.domain.SecurityEventLog;
 import kr.co.dh.globelog.domain.SecurityEventLogRepository;
 import kr.co.dh.globelog.domain.SecurityEventType;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,14 +21,18 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * 관리자 "보안 로그" 화면 — 로그인/로그아웃(관리자·일반 사용자 구분), 게시글 CRUD/조회,
@@ -44,9 +49,14 @@ public class AdminSecurityLogController {
     private static final DateTimeFormatter EXPORT_FILENAME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private final SecurityEventLogRepository securityEventLogRepository;
+    private final SecurityLogExcelWriter securityLogExcelWriter;
+    private final SecurityAuditService securityAuditService;
 
-    public AdminSecurityLogController(SecurityEventLogRepository securityEventLogRepository) {
+    public AdminSecurityLogController(SecurityEventLogRepository securityEventLogRepository,
+            SecurityLogExcelWriter securityLogExcelWriter, SecurityAuditService securityAuditService) {
         this.securityEventLogRepository = securityEventLogRepository;
+        this.securityLogExcelWriter = securityLogExcelWriter;
+        this.securityAuditService = securityAuditService;
     }
 
     @GetMapping
@@ -77,21 +87,39 @@ public class AdminSecurityLogController {
     // 목록 화면과 같은 필터(category/actorType/from/to/keyword)를 그대로 받아 "지금 보고
     // 있는 조건 그대로" 다운로드되게 한다. 페이지네이션 없이 전체(최대 EXPORT_MAX_ROWS건)를
     // 내려받는다는 점만 list()와 다르다.
-    @GetMapping("/export")
+    //
+    // 비밀번호는 쿼리스트링(GET)에 실리면 접근 로그/프록시/브라우저 히스토리에 남을 수
+    // 있어 반드시 POST 폼 바디로만 받는다. "다운로드 사유"는 필수 입력이고, 다운로드
+    // 행위 자체도 보안 로그에 남는다(감사자를 감사하는 셈 — 누가 언제 무슨 사유로 로그를
+    // 통째로 반출했는지 추적 가능해야 함).
+    @PostMapping("/export")
     @ResponseBody
     public ResponseEntity<byte[]> export(
             @RequestParam(required = false) SecurityEventCategory category,
             @RequestParam(required = false) SecurityActorType actorType,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam String reason,
+            @RequestParam(required = false) String password,
+            Authentication authentication) {
+        String trimmedReason = reason == null ? "" : reason.trim();
+        if (trimmedReason.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "다운로드 사유를 입력해주세요.");
+        }
+
         String trimmedKeyword = keyword == null ? "" : keyword.trim();
         Specification<SecurityEventLog> spec = buildSpecification(category, actorType, from, to, trimmedKeyword);
         Pageable exportLimit = PageRequest.of(0, EXPORT_MAX_ROWS, Sort.by(Sort.Direction.DESC, "occurredAt"));
         List<SecurityEventLog> logs = securityEventLogRepository.findAll(spec, exportLimit).getContent();
 
-        byte[] excelBytes = SecurityLogExcelWriter.write(logs);
+        boolean protectedFile = password != null && !password.isBlank();
+        byte[] excelBytes = securityLogExcelWriter.write(logs, password);
         String filename = "security-logs-" + LocalDateTime.now().format(EXPORT_FILENAME_FORMAT) + ".xlsx";
+
+        securityAuditService.record(SecurityEventType.EXCEL_EXPORT, SecurityActorType.ADMIN,
+                null, authentication.getName(), "SECURITY_LOG", null,
+                trimmedReason + " (" + logs.size() + "건" + (protectedFile ? ", 비밀번호 보호" : "") + ")");
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(

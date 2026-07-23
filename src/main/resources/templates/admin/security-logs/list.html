@@ -17,10 +17,7 @@
             <span>보안 로그</span>
         </nav>
         <div class="content-topbar-actions">
-            <a class="btn btn-secondary btn-sm"
-               th:href="@{/admin/security-logs/export(category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}">
-                ⬇ 엑셀 다운로드
-            </a>
+            <button type="button" id="open-export-modal" class="btn btn-secondary btn-sm">⬇ 엑셀 다운로드</button>
             <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
         </div>
     </div>
@@ -38,7 +35,7 @@
                 <select name="category" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
                     <option value="">전체 구분</option>
                     <option th:each="c : ${categories}" th:value="${c}"
-                            th:text="${c.name() == 'AUTH'} ? '인증' : (${c.name() == 'TRIP'} ? '게시글' : '채팅')"
+                            th:text="${c.name() == 'AUTH'} ? '인증' : (${c.name() == 'TRIP'} ? '게시글' : (${c.name() == 'CHAT'} ? '채팅' : '시스템'))"
                             th:selected="${c == category}"></option>
                 </select>
                 <select name="actorType" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
@@ -84,7 +81,8 @@
                     <span th:if="${log.actorType.name() == 'ANONYMOUS'}" class="badge badge-gray">비로그인</span>
                     <span th:text="${log.actorLabel}"></span>
                 </td>
-                <td class="muted" th:text="${log.targetType != null} ? (${log.targetType} + ' #' + ${log.targetId}) : '—'"></td>
+                <td class="muted"
+                    th:text="${log.targetType == null} ? '—' : (${log.targetId != null} ? (${log.targetType} + ' #' + ${log.targetId}) : ${log.targetType})"></td>
                 <td class="muted" th:text="${log.detail} ?: '—'"></td>
                 <td class="muted" th:text="${log.ipAddress} ?: '—'"></td>
             </tr>
@@ -136,6 +134,47 @@
 </main>
 </div>
 
+<!-- ── 엑셀 다운로드 모달 ────────────────────────────── -->
+<div id="export-modal" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>엑셀 다운로드</h2>
+            <button type="button" class="modal-close" data-modal-close aria-label="닫기">×</button>
+        </div>
+        <!-- 비밀번호가 쿼리스트링(GET)에 남지 않도록 반드시 POST 폼으로 제출한다. 서버가
+             Content-Disposition: attachment로 응답하면 브라우저가 페이지 이동 없이
+             파일만 내려받으므로 별도 JS(fetch/blob) 없이 그냥 제출한다. -->
+        <form th:action="@{/admin/security-logs/export}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="category" th:value="${category}">
+            <input type="hidden" name="actorType" th:value="${actorType}">
+            <input type="hidden" name="from" th:value="${from}">
+            <input type="hidden" name="to" th:value="${to}">
+            <input type="hidden" name="keyword" th:value="${keyword}">
+            <div class="modal-body">
+                <p class="muted" style="margin:0;font-size:13px">
+                    현재 화면에 적용된 필터 조건 그대로(최대 5만건) 다운로드됩니다.
+                </p>
+                <label>
+                    다운로드 사유 <span class="muted" style="font-weight:400;font-size:12px">(필수, 이 다운로드 자체도 보안 로그에 기록됩니다)</span>
+                    <textarea name="reason" rows="2" required maxlength="150"
+                              placeholder="예: 7월 3주차 로그인 이상 징후 점검"></textarea>
+                </label>
+                <label>
+                    엑셀 파일 비밀번호 <span class="muted" style="font-weight:400;font-size:12px">(선택 — 설정하면 파일을 열 때 비밀번호를 요구합니다)</span>
+                    <input type="password" name="password" autocomplete="new-password" placeholder="비워두면 비밀번호 없이 다운로드">
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>취소</button>
+                <button type="submit" class="btn btn-primary">다운로드</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/js/admin-modal.js}"></script>
+<script th:src="@{/js/admin-security-logs.js}"></script>
 <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

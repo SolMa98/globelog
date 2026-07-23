@@ -19,7 +19,11 @@ public enum SecurityEventType {
     CHAT_LEAVE(SecurityEventCategory.CHAT, "채팅방 나가기"),
     CHAT_MESSAGE_SEND(SecurityEventCategory.CHAT, "메시지 전송"),
     CHAT_MESSAGE_EDIT(SecurityEventCategory.CHAT, "메시지 수정"),
-    CHAT_MESSAGE_DELETE(SecurityEventCategory.CHAT, "메시지 삭제");
+    CHAT_MESSAGE_DELETE(SecurityEventCategory.CHAT, "메시지 삭제"),
+
+    // 이 화면(보안 로그) 자체뿐 아니라 향후 다른 관리자 목록 화면의 엑셀 다운로드도
+    // 같은 이벤트 타입을 재사용한다 — ExcelExportService/detail로 "무엇을" 내려받았는지 구분.
+    EXCEL_EXPORT(SecurityEventCategory.SYSTEM, "엑셀 다운로드");
 
     private final SecurityEventCategory category;
     private final String label;

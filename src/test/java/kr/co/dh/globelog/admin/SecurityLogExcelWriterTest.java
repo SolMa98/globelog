@@ -9,6 +9,7 @@ import java.util.List;
 import kr.co.dh.globelog.domain.SecurityActorType;
 import kr.co.dh.globelog.domain.SecurityEventLog;
 import kr.co.dh.globelog.domain.SecurityEventType;
+import kr.co.dh.globelog.excel.ExcelExportService;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -17,13 +18,15 @@ import org.junit.jupiter.api.Test;
 
 class SecurityLogExcelWriterTest {
 
+    private final SecurityLogExcelWriter writer = new SecurityLogExcelWriter(new ExcelExportService());
+
     @Test
     void 헤더와_행이_정확히_기록된다() throws IOException {
         SecurityEventLog log = new SecurityEventLog(
                 LocalDateTime.of(2026, 7, 23, 12, 0, 0), SecurityEventType.LOGIN_SUCCESS, SecurityActorType.ADMIN,
                 1L, "admin", null, null, null, "127.0.0.1", "TestAgent");
 
-        byte[] bytes = SecurityLogExcelWriter.write(List.of(log));
+        byte[] bytes = writer.write(List.of(log), null);
 
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -42,7 +45,7 @@ class SecurityLogExcelWriterTest {
 
     @Test
     void 빈_목록이면_헤더만_있는_시트를_만든다() throws IOException {
-        byte[] bytes = SecurityLogExcelWriter.write(List.of());
+        byte[] bytes = writer.write(List.of(), null);
 
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -57,11 +60,26 @@ class SecurityLogExcelWriterTest {
                 LocalDateTime.now(), SecurityEventType.CHAT_LEAVE, SecurityActorType.USER,
                 2L, "tester", "CHAT_ROOM", null, null, null, null);
 
-        byte[] bytes = SecurityLogExcelWriter.write(List.of(log));
+        byte[] bytes = writer.write(List.of(log), null);
 
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
             Row dataRow = workbook.getSheetAt(0).getRow(1);
             assertThat(dataRow.getCell(5)).isNull();
         }
+    }
+
+    @Test
+    void 비밀번호를_주면_암호화된_파일이_생성된다() {
+        SecurityEventLog log = new SecurityEventLog(
+                LocalDateTime.now(), SecurityEventType.LOGIN_SUCCESS, SecurityActorType.ADMIN,
+                1L, "admin", null, null, null, null, null);
+
+        byte[] bytes = writer.write(List.of(log), "secret123!");
+
+        // 비밀번호 없이 열면(WorkbookFactory가 기본 빈 비밀번호로 시도) 실패해야 한다 —
+        // 즉 평문 xlsx가 아니라 실제로 암호화된 파일임을 확인.
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> WorkbookFactory.create(new ByteArrayInputStream(bytes)))
+                .isInstanceOf(Exception.class);
     }
 }
