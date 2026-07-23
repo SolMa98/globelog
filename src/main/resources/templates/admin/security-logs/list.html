@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Globelog · 보안 로그</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-shell">
+<div th:replace="~{admin/fragments/nav}"></div>
+<main class="page">
+    <div class="content-topbar">
+        <nav class="breadcrumb">
+            <span>Globelog Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span>보안 로그</span>
+        </nav>
+        <div class="content-topbar-actions">
+            <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
+        </div>
+    </div>
+    <div class="table-card">
+        <p class="info">
+            로그인/로그아웃(관리자·일반 사용자 구분), 게시글 등록/수정/삭제/조회, 채팅 이벤트(방 생성·초대·나가기·메시지
+            전송/수정/삭제)를 기록합니다. 채팅 메시지 원문은 저장하지 않습니다.
+        </p>
+        <div class="list-toolbar">
+            <h2 class="list-toolbar-title">
+                보안 로그
+                <span class="total-count">총 <span th:text="${logs.totalElements}"></span>건</span>
+            </h2>
+            <form method="get" th:action="@{/admin/security-logs}" class="form-row-filter">
+                <select name="category" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                    <option value="">전체 구분</option>
+                    <option th:each="c : ${categories}" th:value="${c}"
+                            th:text="${c.name() == 'AUTH'} ? '인증' : (${c.name() == 'TRIP'} ? '게시글' : '채팅')"
+                            th:selected="${c == category}"></option>
+                </select>
+                <select name="actorType" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                    <option value="">전체 주체</option>
+                    <option th:each="a : ${actorTypes}" th:value="${a}"
+                            th:text="${a.name() == 'ADMIN'} ? '관리자' : (${a.name() == 'USER'} ? '일반 사용자' : '비로그인')"
+                            th:selected="${a == actorType}"></option>
+                </select>
+                <input type="date" name="from" th:value="${from}"
+                       style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                <input type="date" name="to" th:value="${to}"
+                       style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)">
+                <input type="text" name="keyword" th:value="${keyword}" placeholder="이름/상세 검색">
+                <button type="submit" class="btn btn-primary btn-sm">검색</button>
+            </form>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>발생 시각</th>
+                <th>이벤트</th>
+                <th>주체</th>
+                <th>대상</th>
+                <th>상세</th>
+                <th>IP</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="log : ${logs}">
+                <td class="muted" th:text="${log.occurredAt}"></td>
+                <td th:switch="${log.eventType.name()}">
+                    <span th:case="'LOGIN_FAILURE'" class="badge badge-danger" th:text="${log.eventType.label}"></span>
+                    <span th:case="'TRIP_DELETE'" class="badge badge-danger" th:text="${log.eventType.label}"></span>
+                    <span th:case="'CHAT_MESSAGE_DELETE'" class="badge badge-danger" th:text="${log.eventType.label}"></span>
+                    <span th:case="'LOGIN_SUCCESS'" class="badge badge-success" th:text="${log.eventType.label}"></span>
+                    <span th:case="'TRIP_CREATE'" class="badge badge-success" th:text="${log.eventType.label}"></span>
+                    <span th:case="'CHAT_ROOM_CREATE'" class="badge badge-success" th:text="${log.eventType.label}"></span>
+                    <span th:case="*" class="badge badge-gray" th:text="${log.eventType.label}"></span>
+                </td>
+                <td>
+                    <span th:if="${log.actorType.name() == 'ADMIN'}" class="badge">관리자</span>
+                    <span th:if="${log.actorType.name() == 'USER'}" class="badge badge-gray">일반 사용자</span>
+                    <span th:if="${log.actorType.name() == 'ANONYMOUS'}" class="badge badge-gray">비로그인</span>
+                    <span th:text="${log.actorLabel}"></span>
+                </td>
+                <td class="muted" th:text="${log.targetType != null} ? (${log.targetType} + ' #' + ${log.targetId}) : '—'"></td>
+                <td class="muted" th:text="${log.detail} ?: '—'"></td>
+                <td class="muted" th:text="${log.ipAddress} ?: '—'"></td>
+            </tr>
+            <tr th:if="${logs.isEmpty()}">
+                <td colspan="6" class="empty">기록된 로그가 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="list-footer" th:if="${logs.totalPages > 0}">
+            <div class="page-size-wrap">
+                <button type="button" class="page-size-btn" data-page-size-dec aria-label="줄이기">−</button>
+                <input type="number" class="page-size-input" data-page-size-input
+                       min="5" max="200" th:value="${logs.size}" aria-label="페이지당 행 수">
+                <button type="button" class="page-size-btn" data-page-size-inc aria-label="늘리기">+</button>
+            </div>
+            <ul class="pagination" aria-label="페이지 탐색">
+                <li th:class="${logs.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${logs.first} ? '#' : @{/admin/security-logs(page=0,category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}"
+                       th:attr="tabindex=${logs.first} ? '-1' : null,aria-disabled=${logs.first} ? 'true' : null"
+                       aria-label="처음">«</a>
+                </li>
+                <li th:class="${logs.first} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${logs.first} ? '#' : @{/admin/security-logs(page=${logs.number - 1},category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}"
+                       th:attr="tabindex=${logs.first} ? '-1' : null,aria-disabled=${logs.first} ? 'true' : null"
+                       aria-label="이전">‹</a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+                    th:if="${i >= logs.number - 2 and i <= logs.number + 2}"
+                    th:class="${i == logs.number} ? 'paging-num active' : 'paging-num'">
+                    <a th:href="@{/admin/security-logs(page=${i},category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}"
+                       th:text="${i + 1}"
+                       th:attr="aria-current=${i == logs.number} ? 'page' : null"></a>
+                </li>
+                <li class="paging-sep" role="separator"></li>
+                <li th:class="${logs.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${logs.last} ? '#' : @{/admin/security-logs(page=${logs.number + 1},category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}"
+                       th:attr="tabindex=${logs.last} ? '-1' : null,aria-disabled=${logs.last} ? 'true' : null"
+                       aria-label="다음">›</a>
+                </li>
+                <li th:class="${logs.last} ? 'paging-nav disabled' : 'paging-nav'">
+                    <a th:href="${logs.last} ? '#' : @{/admin/security-logs(page=${logs.totalPages - 1},category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}"
+                       th:attr="tabindex=${logs.last} ? '-1' : null,aria-disabled=${logs.last} ? 'true' : null"
+                       aria-label="마지막">»</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</main>
+</div>
+
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

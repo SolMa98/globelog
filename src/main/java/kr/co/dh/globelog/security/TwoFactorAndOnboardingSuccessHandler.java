@@ -4,8 +4,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import kr.co.dh.globelog.security.oauth.CustomOAuth2UserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,12 +35,15 @@ public class TwoFactorAndOnboardingSuccessHandler implements AuthenticationSucce
 
     private final UserRepository userRepository;
     private final SecurityContextRepository securityContextRepository;
+    private final SecurityAuditService securityAuditService;
     private final AuthenticationSuccessHandler delegate;
 
     public TwoFactorAndOnboardingSuccessHandler(
-            UserRepository userRepository, SecurityContextRepository securityContextRepository) {
+            UserRepository userRepository, SecurityContextRepository securityContextRepository,
+            SecurityAuditService securityAuditService) {
         this.userRepository = userRepository;
         this.securityContextRepository = securityContextRepository;
+        this.securityAuditService = securityAuditService;
         SavedRequestAwareAuthenticationSuccessHandler savedRequestHandler =
                 new SavedRequestAwareAuthenticationSuccessHandler();
         savedRequestHandler.setDefaultTargetUrl("/");
@@ -67,6 +73,10 @@ public class TwoFactorAndOnboardingSuccessHandler implements AuthenticationSucce
             return;
         }
 
+        if (user != null) {
+            securityAuditService.record(SecurityEventType.LOGIN_SUCCESS, SecurityActorType.USER,
+                    user.getId(), user.getNickname(), null, null, null);
+        }
         delegate.onAuthenticationSuccess(request, response, authentication);
     }
 }

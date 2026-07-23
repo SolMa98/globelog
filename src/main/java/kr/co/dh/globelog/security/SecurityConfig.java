@@ -49,7 +49,10 @@ public class SecurityConfig {
             AdminUserDetailsService adminUserDetailsService,
             PasswordEncoder passwordEncoder,
             AdminIpWhitelistEntryRepository adminIpWhitelistEntryRepository,
-            @Value("${app.admin.ip-whitelist.enabled:false}") boolean adminIpWhitelistEnabled)
+            @Value("${app.admin.ip-whitelist.enabled:false}") boolean adminIpWhitelistEnabled,
+            AdminLoginSuccessHandler adminLoginSuccessHandler,
+            AdminLoginFailureHandler adminLoginFailureHandler,
+            SecurityAuditLogoutHandler securityAuditLogoutHandler)
             throws Exception {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(adminUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
@@ -63,18 +66,21 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(registry -> registry
                         .requestMatchers("/admin/login").permitAll()
-                        // 계정 관리·개인 여행 데이터 열람·통계·IP 화이트리스트는 최상위 관리자 전용.
+                        // 계정 관리·개인 여행 데이터 열람·통계·IP 화이트리스트·보안 로그는 최상위 관리자 전용.
                         // 모더레이터는 국가/지역 마스터 데이터 관리만 가능(아래 anyRequest로 허용).
-                        .requestMatchers("/admin/accounts/**", "/admin/trips/**", "/admin/stats/**", "/admin/ip-whitelist/**")
+                        .requestMatchers("/admin/accounts/**", "/admin/trips/**", "/admin/stats/**",
+                                "/admin/ip-whitelist/**", "/admin/security-logs/**")
                         .hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/admin/login")
-                        .defaultSuccessUrl("/admin/countries", true)
+                        .successHandler(adminLoginSuccessHandler)
+                        .failureHandler(adminLoginFailureHandler)
                         .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/admin/logout")
                         .logoutSuccessUrl("/admin/login")
+                        .addLogoutHandler(securityAuditLogoutHandler)
                         .permitAll());
 
         return http.build();
@@ -90,7 +96,8 @@ public class SecurityConfig {
             LoginFailureHandler loginFailureHandler,
             CustomOAuth2UserService customOAuth2UserService,
             TwoFactorAndOnboardingSuccessHandler twoFactorAndOnboardingSuccessHandler,
-            SecurityContextRepository securityContextRepository)
+            SecurityContextRepository securityContextRepository,
+            SecurityAuditLogoutHandler securityAuditLogoutHandler)
             throws Exception {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(appUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
@@ -129,6 +136,7 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
+                        .addLogoutHandler(securityAuditLogoutHandler)
                         .permitAll());
 
         return http.build();

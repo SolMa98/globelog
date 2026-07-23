@@ -9,6 +9,8 @@ import kr.co.dh.globelog.domain.Country;
 import kr.co.dh.globelog.domain.CountryRepository;
 import kr.co.dh.globelog.domain.Region;
 import kr.co.dh.globelog.domain.RegionRepository;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.Trip;
 import kr.co.dh.globelog.domain.TripImage;
 import kr.co.dh.globelog.domain.TripImageRepository;
@@ -17,6 +19,7 @@ import kr.co.dh.globelog.domain.TripVisibility;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.file.FileStorageService;
 import kr.co.dh.globelog.security.CurrentUserResolver;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -46,16 +49,19 @@ public class MyTripController {
     private final CountryRepository countryRepository;
     private final FileStorageService fileStorageService;
     private final CurrentUserResolver currentUserResolver;
+    private final SecurityAuditService securityAuditService;
 
     public MyTripController(TripRepository tripRepository, TripImageRepository tripImageRepository,
             RegionRepository regionRepository, CountryRepository countryRepository,
-            FileStorageService fileStorageService, CurrentUserResolver currentUserResolver) {
+            FileStorageService fileStorageService, CurrentUserResolver currentUserResolver,
+            SecurityAuditService securityAuditService) {
         this.tripRepository = tripRepository;
         this.tripImageRepository = tripImageRepository;
         this.regionRepository = regionRepository;
         this.countryRepository = countryRepository;
         this.fileStorageService = fileStorageService;
         this.currentUserResolver = currentUserResolver;
+        this.securityAuditService = securityAuditService;
     }
 
     @GetMapping
@@ -110,6 +116,8 @@ public class MyTripController {
                 LocalDate.parse(visitedDate), parsedEndDate, emptyToNull(description));
         trip.setVisibility(visibility);
         tripRepository.save(trip);
+        securityAuditService.record(SecurityEventType.TRIP_CREATE, SecurityActorType.USER,
+                viewer.getId(), viewer.getNickname(), "TRIP", trip.getId(), title);
         return ResponseEntity.ok(Map.of("success", true, "id", trip.getId()));
     }
 
@@ -141,6 +149,8 @@ public class MyTripController {
         trip.setDescription(emptyToNull(description));
         trip.setVisibility(visibility);
         tripRepository.save(trip);
+        securityAuditService.record(SecurityEventType.TRIP_UPDATE, SecurityActorType.USER,
+                trip.getUser().getId(), trip.getUser().getNickname(), "TRIP", trip.getId(), title);
         return ResponseEntity.ok(Map.of("success", true));
     }
 
@@ -151,6 +161,8 @@ public class MyTripController {
         List<TripImage> images = tripImageRepository.findByTripOrderBySortOrderAsc(trip);
         images.forEach(img -> fileStorageService.delete(img.getFilePath()));
         tripImageRepository.deleteAll(images);
+        securityAuditService.record(SecurityEventType.TRIP_DELETE, SecurityActorType.USER,
+                trip.getUser().getId(), trip.getUser().getNickname(), "TRIP", trip.getId(), trip.getTitle());
         tripRepository.delete(trip);
         return ResponseEntity.ok(Map.of("success", true));
     }

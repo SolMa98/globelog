@@ -15,6 +15,7 @@ import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.file.FileStorageService;
 import kr.co.dh.globelog.security.CurrentUserResolver;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,8 @@ class MyTripControllerTest {
     @Mock
     private CurrentUserResolver currentUserResolver;
     @Mock
+    private SecurityAuditService securityAuditService;
+    @Mock
     private Authentication authentication;
     @Mock
     private Trip trip;
@@ -55,7 +58,7 @@ class MyTripControllerTest {
     @BeforeEach
     void setUp() {
         controller = new MyTripController(tripRepository, tripImageRepository, regionRepository,
-                countryRepository, fileStorageService, currentUserResolver);
+                countryRepository, fileStorageService, currentUserResolver, securityAuditService);
 
         viewer = mock(User.class);
         otherOwner = mock(User.class);

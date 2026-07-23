@@ -12,8 +12,11 @@ import kr.co.dh.globelog.domain.ChatRoomMember;
 import kr.co.dh.globelog.domain.ChatRoomMemberRepository;
 import kr.co.dh.globelog.domain.ChatRoomRepository;
 import kr.co.dh.globelog.domain.ChatRoomType;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,13 +34,16 @@ public class ChatRoomService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final SecurityAuditService securityAuditService;
 
     public ChatRoomService(ChatRoomRepository chatRoomRepository, ChatRoomMemberRepository chatRoomMemberRepository,
-            ChatMessageRepository chatMessageRepository, UserRepository userRepository) {
+            ChatMessageRepository chatMessageRepository, UserRepository userRepository,
+            SecurityAuditService securityAuditService) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.userRepository = userRepository;
+        this.securityAuditService = securityAuditService;
     }
 
     // 같은 두 사람 사이엔 DIRECT 방이 하나만 있어야 하므로 항상 먼저 찾아보고, 없을 때만 만든다.
@@ -52,6 +58,9 @@ public class ChatRoomService {
                     ChatRoom room = chatRoomRepository.save(new ChatRoom(ChatRoomType.DIRECT, null));
                     chatRoomMemberRepository.save(new ChatRoomMember(room, me));
                     chatRoomMemberRepository.save(new ChatRoomMember(room, target));
+                    securityAuditService.record(SecurityEventType.CHAT_ROOM_CREATE, SecurityActorType.USER,
+                            me.getId(), me.getNickname(), "CHAT_ROOM", room.getId(),
+                            "1:1 대화방 · 상대: " + target.getNickname());
                     return room;
                 });
     }
@@ -62,6 +71,8 @@ public class ChatRoomService {
                 .orElseGet(() -> {
                     ChatRoom room = chatRoomRepository.save(new ChatRoom(ChatRoomType.SELF, null));
                     chatRoomMemberRepository.save(new ChatRoomMember(room, me));
+                    securityAuditService.record(SecurityEventType.CHAT_ROOM_CREATE, SecurityActorType.USER,
+                            me.getId(), me.getNickname(), "CHAT_ROOM", room.getId(), "나와의 채팅");
                     return room;
                 });
     }
@@ -84,6 +95,8 @@ public class ChatRoomService {
                 chatRoomMemberRepository.save(new ChatRoomMember(room, user));
             }
         }
+        securityAuditService.record(SecurityEventType.CHAT_ROOM_CREATE, SecurityActorType.USER,
+                creator.getId(), creator.getNickname(), "CHAT_ROOM", room.getId(), "그룹방 · " + trimmedName);
         return room;
     }
 
@@ -99,6 +112,8 @@ public class ChatRoomService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 참여 중인 사용자입니다.");
         }
         chatRoomMemberRepository.save(new ChatRoomMember(room, target));
+        securityAuditService.record(SecurityEventType.CHAT_INVITE, SecurityActorType.USER,
+                inviter.getId(), inviter.getNickname(), "CHAT_ROOM", room.getId(), "초대 대상: " + target.getNickname());
     }
 
     @Transactional
@@ -108,6 +123,8 @@ public class ChatRoomService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "그룹 채팅방만 나갈 수 있습니다.");
         }
         chatRoomMemberRepository.deleteByRoomIdAndUserId(roomId, user.getId());
+        securityAuditService.record(SecurityEventType.CHAT_LEAVE, SecurityActorType.USER,
+                user.getId(), user.getNickname(), "CHAT_ROOM", room.getId(), null);
     }
 
     public List<ChatRoomSummaryResponse> listRooms(User viewer) {

@@ -23,7 +23,7 @@
                 </li>
                 <!-- 시스템 (최상위 관리자 전용) -->
                 <li class="snb-item" data-menu="menu2"
-                    th:classappend="${activeMenu == 'accounts'} ? 'active'"
+                    th:classappend="${activeMenu == 'accounts' or activeMenu == 'ipWhitelist' or activeMenu == 'securityLogs'} ? 'active'"
                     sec:authorize="hasRole('SUPER_ADMIN')">
                     <a href="#" aria-label="시스템">
                         <span aria-hidden="true">⚙️</span>
@@ -85,7 +85,7 @@
 
         <!-- 시스템 서브메뉴 (최상위 관리자 전용) -->
         <div class="snb-submenu" id="menu2"
-             th:classappend="${activeMenu == 'accounts' or activeMenu == 'ipWhitelist'} ? 'active'"
+             th:classappend="${activeMenu == 'accounts' or activeMenu == 'ipWhitelist' or activeMenu == 'securityLogs'} ? 'active'"
              sec:authorize="hasRole('SUPER_ADMIN')">
             <div class="snb-submenu-title">시스템</div>
             <ul class="snb-submenu-list">
@@ -99,6 +99,12 @@
                     <a th:href="@{/admin/ip-whitelist}"
                        th:classappend="${activeMenu == 'ipWhitelist'} ? 'active'">
                         🛡 IP 화이트리스트
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/security-logs}"
+                       th:classappend="${activeMenu == 'securityLogs'} ? 'active'">
+                        📜 보안 로그
                     </a>
                 </li>
             </ul>

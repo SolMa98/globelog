@@ -5,9 +5,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
 import kr.co.dh.globelog.mail.MailService;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import kr.co.dh.globelog.security.totp.TotpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,16 +45,19 @@ public class TwoFactorController {
     private final TotpService totpService;
     private final MailService mailService;
     private final SecurityContextRepository securityContextRepository;
+    private final SecurityAuditService securityAuditService;
 
     public TwoFactorController(
             UserRepository userRepository,
             TotpService totpService,
             MailService mailService,
-            SecurityContextRepository securityContextRepository) {
+            SecurityContextRepository securityContextRepository,
+            SecurityAuditService securityAuditService) {
         this.userRepository = userRepository;
         this.totpService = totpService;
         this.mailService = mailService;
         this.securityContextRepository = securityContextRepository;
+        this.securityAuditService = securityAuditService;
     }
 
     @GetMapping("/login/2fa")
@@ -134,6 +140,12 @@ public class TwoFactorController {
         context.setAuthentication(pending);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
+
+        User user = userRepository.findByEmail(pending.getName()).orElse(null);
+        if (user != null) {
+            securityAuditService.record(SecurityEventType.LOGIN_SUCCESS, SecurityActorType.USER,
+                    user.getId(), user.getNickname(), null, null, "2차 인증 완료");
+        }
         return "redirect:/";
     }
 

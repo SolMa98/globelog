@@ -9,9 +9,12 @@ import kr.co.dh.globelog.domain.ChatRoom;
 import kr.co.dh.globelog.domain.ChatRoomMember;
 import kr.co.dh.globelog.domain.ChatRoomMemberRepository;
 import kr.co.dh.globelog.domain.ChatRoomType;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.file.FileStorageService;
 import kr.co.dh.globelog.push.WebPushService;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -35,11 +38,13 @@ public class ChatMessageService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatPresenceService chatPresenceService;
     private final WebPushService webPushService;
+    private final SecurityAuditService securityAuditService;
 
     public ChatMessageService(ChatMessageRepository chatMessageRepository,
             ChatRoomMemberRepository chatRoomMemberRepository, ChatRoomService chatRoomService,
             FileStorageService fileStorageService, SimpMessagingTemplate messagingTemplate,
-            ChatPresenceService chatPresenceService, WebPushService webPushService) {
+            ChatPresenceService chatPresenceService, WebPushService webPushService,
+            SecurityAuditService securityAuditService) {
         this.chatMessageRepository = chatMessageRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.chatRoomService = chatRoomService;
@@ -47,6 +52,7 @@ public class ChatMessageService {
         this.messagingTemplate = messagingTemplate;
         this.chatPresenceService = chatPresenceService;
         this.webPushService = webPushService;
+        this.securityAuditService = securityAuditService;
     }
 
     @Transactional
@@ -63,6 +69,9 @@ public class ChatMessageService {
         ChatMessageResponse response = ChatMessageResponse.from(saved, sender.getId());
         broadcast(roomId, ChatMessageEvent.NEW, response);
         notifyOtherMembers(room, sender, truncate(trimmed));
+        // 메시지 원문은 남기지 않는다(프라이버시) — 누가 언제 어느 방에 보냈는지만 기록.
+        securityAuditService.record(SecurityEventType.CHAT_MESSAGE_SEND, SecurityActorType.USER,
+                sender.getId(), sender.getNickname(), "CHAT_MESSAGE", saved.getId(), "텍스트");
         return response;
     }
 
@@ -75,6 +84,9 @@ public class ChatMessageService {
         ChatMessageResponse response = ChatMessageResponse.from(saved, sender.getId());
         broadcast(roomId, ChatMessageEvent.NEW, response);
         notifyOtherMembers(room, sender, "📎 " + file.getOriginalFilename());
+        securityAuditService.record(SecurityEventType.CHAT_MESSAGE_SEND, SecurityActorType.USER,
+                sender.getId(), sender.getNickname(), "CHAT_MESSAGE", saved.getId(),
+                "파일: " + file.getOriginalFilename());
         return response;
     }
 
@@ -100,6 +112,8 @@ public class ChatMessageService {
         message.editText(trimmed);
         ChatMessageResponse response = ChatMessageResponse.from(message, editor.getId());
         broadcast(roomId, ChatMessageEvent.EDIT, response);
+        securityAuditService.record(SecurityEventType.CHAT_MESSAGE_EDIT, SecurityActorType.USER,
+                editor.getId(), editor.getNickname(), "CHAT_MESSAGE", message.getId(), null);
         return response;
     }
 
@@ -119,6 +133,8 @@ public class ChatMessageService {
         message.markDeleted();
         ChatMessageResponse response = ChatMessageResponse.from(message, deleter.getId());
         broadcast(roomId, ChatMessageEvent.DELETE, response);
+        securityAuditService.record(SecurityEventType.CHAT_MESSAGE_DELETE, SecurityActorType.USER,
+                deleter.getId(), deleter.getNickname(), "CHAT_MESSAGE", message.getId(), null);
         return response;
     }
 

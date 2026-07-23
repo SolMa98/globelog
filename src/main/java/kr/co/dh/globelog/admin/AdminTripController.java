@@ -7,17 +7,21 @@ import kr.co.dh.globelog.domain.Country;
 import kr.co.dh.globelog.domain.CountryRepository;
 import kr.co.dh.globelog.domain.Region;
 import kr.co.dh.globelog.domain.RegionRepository;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.Trip;
 import kr.co.dh.globelog.domain.TripImage;
 import kr.co.dh.globelog.domain.TripImageRepository;
 import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.file.FileStorageService;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,15 +42,17 @@ public class AdminTripController {
     private final RegionRepository regionRepository;
     private final CountryRepository countryRepository;
     private final FileStorageService fileStorageService;
+    private final SecurityAuditService securityAuditService;
 
     public AdminTripController(TripRepository tripRepository, TripImageRepository tripImageRepository,
             RegionRepository regionRepository, CountryRepository countryRepository,
-            FileStorageService fileStorageService) {
+            FileStorageService fileStorageService, SecurityAuditService securityAuditService) {
         this.tripRepository = tripRepository;
         this.tripImageRepository = tripImageRepository;
         this.regionRepository = regionRepository;
         this.countryRepository = countryRepository;
         this.fileStorageService = fileStorageService;
+        this.securityAuditService = securityAuditService;
     }
 
     @GetMapping
@@ -95,7 +101,8 @@ public class AdminTripController {
             @RequestParam String title,
             @RequestParam String visitedDate,
             @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String description) {
+            @RequestParam(required = false) String description,
+            Authentication authentication) {
         Country country = countryRepository.findById(countryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "국가를 찾을 수 없습니다."));
         Region region = null;
@@ -107,6 +114,8 @@ public class AdminTripController {
         // 관리자 백오피스로 등록하는 여행은 아직 소유자(User) 개념이 없어 null로 둠
         Trip trip = tripRepository.save(new Trip(null, region, country, title,
                 LocalDate.parse(visitedDate), parsedEndDate, emptyToNull(description)));
+        securityAuditService.record(SecurityEventType.TRIP_CREATE, SecurityActorType.ADMIN,
+                null, authentication.getName(), "TRIP", trip.getId(), title);
         return ResponseEntity.ok(Map.of("success", true, "id", trip.getId()));
     }
 
@@ -118,7 +127,8 @@ public class AdminTripController {
             @RequestParam String visitedDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String description,
-            @RequestParam(defaultValue = "0") int priority) {
+            @RequestParam(defaultValue = "0") int priority,
+            Authentication authentication) {
         Trip trip = findTripOrThrow(id);
         trip.setTitle(title);
         trip.setVisitedDate(LocalDate.parse(visitedDate));
@@ -128,16 +138,20 @@ public class AdminTripController {
         // 메모리 참고) — 0~5로 제한해 남용으로 피드가 "진짜 랜덤"이 아니게 되는 걸 막음.
         trip.setPriority(Math.max(0, Math.min(5, priority)));
         tripRepository.save(trip);
+        securityAuditService.record(SecurityEventType.TRIP_UPDATE, SecurityActorType.ADMIN,
+                null, authentication.getName(), "TRIP", trip.getId(), title);
         return ResponseEntity.ok(Map.of("success", true));
     }
 
     @PostMapping("/{id}/delete")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id, Authentication authentication) {
         Trip trip = findTripOrThrow(id);
         List<TripImage> images = tripImageRepository.findByTripOrderBySortOrderAsc(trip);
         images.forEach(img -> fileStorageService.delete(img.getFilePath()));
         tripImageRepository.deleteAll(images);
+        securityAuditService.record(SecurityEventType.TRIP_DELETE, SecurityActorType.ADMIN,
+                null, authentication.getName(), "TRIP", trip.getId(), trip.getTitle());
         tripRepository.delete(trip);
         return ResponseEntity.ok(Map.of("success", true));
     }

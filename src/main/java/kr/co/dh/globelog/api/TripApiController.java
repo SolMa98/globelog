@@ -7,6 +7,8 @@ import java.util.Optional;
 import kr.co.dh.globelog.domain.Country;
 import kr.co.dh.globelog.domain.CountryRepository;
 import kr.co.dh.globelog.domain.RegionRepository;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.Trip;
 import kr.co.dh.globelog.domain.TripCommentRepository;
 import kr.co.dh.globelog.domain.TripImageRepository;
@@ -15,6 +17,7 @@ import kr.co.dh.globelog.domain.TripRepository;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.domain.UserRepository;
 import kr.co.dh.globelog.security.CurrentUserResolver;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -39,12 +42,13 @@ public class TripApiController {
     private final UserRepository userRepository;
     private final TripVisibilityService tripVisibilityService;
     private final CurrentUserResolver currentUserResolver;
+    private final SecurityAuditService securityAuditService;
 
     public TripApiController(RegionRepository regionRepository, CountryRepository countryRepository,
             TripRepository tripRepository, TripImageRepository tripImageRepository,
             TripLikeRepository tripLikeRepository, TripCommentRepository tripCommentRepository,
             UserRepository userRepository, TripVisibilityService tripVisibilityService,
-            CurrentUserResolver currentUserResolver) {
+            CurrentUserResolver currentUserResolver, SecurityAuditService securityAuditService) {
         this.regionRepository = regionRepository;
         this.countryRepository = countryRepository;
         this.tripRepository = tripRepository;
@@ -54,6 +58,7 @@ public class TripApiController {
         this.userRepository = userRepository;
         this.tripVisibilityService = tripVisibilityService;
         this.currentUserResolver = currentUserResolver;
+        this.securityAuditService = securityAuditService;
     }
 
     // owner 소유이면서 뷰어에게 공개범위가 통과되는 여행만, 그 owner 기준 방문 순번을
@@ -134,6 +139,12 @@ public class TripApiController {
         }
         trip.incrementViewCount();
         tripRepository.save(trip);
+        Optional<User> viewer = currentUserResolver.resolve(authentication);
+        securityAuditService.record(SecurityEventType.TRIP_VIEW,
+                viewer.isPresent() ? SecurityActorType.USER : SecurityActorType.ANONYMOUS,
+                viewer.map(User::getId).orElse(null),
+                viewer.map(User::getNickname).orElse("비로그인 방문자"),
+                "TRIP", trip.getId(), trip.getTitle());
         return Map.of("viewCount", trip.getViewCount());
     }
 

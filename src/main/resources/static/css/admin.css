@@ -95,6 +95,11 @@
     color: var(--muted);
 }
 
+[data-theme="dark"] .badge-danger {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f4867d;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -867,6 +872,11 @@ tbody tr.js-row-edit {
 .badge-gray {
     background: rgba(123, 129, 149, 0.1);
     color: var(--muted);
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-dark);
 }
 
 /* ── 폼 ────────────────────────────────────────────────── */
