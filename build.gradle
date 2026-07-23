@@ -43,6 +43,9 @@ dependencies {
     implementation 'org.apache.httpcomponents:httpcore:4.4.16'
     // 같은 이유로 jose4j도 명시(PushService.send()가 throws JoseException을 선언).
     implementation 'org.bitbucket.b_c:jose4j:0.7.9'
+    // 관리자 보안 로그 엑셀 다운로드용. SXSSFWorkbook(스트리밍)을 써서 행이 많아져도
+    // 메모리에 전부 올리지 않는다(SecurityLogExcelWriter 참고).
+    implementation 'org.apache.poi:poi-ooxml:5.3.0'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'

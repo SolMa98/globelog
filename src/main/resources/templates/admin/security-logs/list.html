@@ -17,6 +17,10 @@
             <span>보안 로그</span>
         </nav>
         <div class="content-topbar-actions">
+            <a class="btn btn-secondary btn-sm"
+               th:href="@{/admin/security-logs/export(category=${category},actorType=${actorType},from=${from},to=${to},keyword=${keyword})}">
+                ⬇ 엑셀 다운로드
+            </a>
             <button type="button" class="btn-icon" onclick="window.location.reload()" aria-label="새로고침">↻</button>
         </div>
     </div>
