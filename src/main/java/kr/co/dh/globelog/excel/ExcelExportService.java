@@ -22,9 +22,10 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 /**
- * 관리자 화면 어디서든(보안 로그, 향후 계정/여행 목록 등) "표 형태 데이터를 엑셀로
- * 내려받기"에 재사용하는 공용 서비스. 헤더/행 데이터만 넘기면 되고, 비밀번호를 넘기면
- * Excel이 열 때 암호를 요구하는 보호된 파일로 감싼다.
+ * 관리자 화면 어디서든(보안 로그, 통계, 향후 계정/여행 목록 등) "표 형태 데이터를 엑셀로
+ * 내려받기"에 재사용하는 공용 서비스. 시트별 헤더/행 데이터만 넘기면 되고(한 워크북에
+ * 여러 시트도 가능 — 통계처럼 성격이 다른 표 여러 개를 한 파일로 묶을 때 씀), 비밀번호를
+ * 넘기면 Excel이 열 때 암호를 요구하는 보호된 파일로 감싼다.
  *
  * 생성은 SXSSFWorkbook(스트리밍)으로 해서 행이 많아져도 힙에 전부 안 올린다. 다만
  * 비밀번호 보호는 완성된 OOXML 패키지 전체를 POIFS(OLE2 컨테이너)로 한 번 더 감싸는
@@ -34,45 +35,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class ExcelExportService {
 
-    public byte[] export(String sheetName, List<String> headers, List<List<Object>> rows,
-            List<Integer> columnWidthsChars, String password) {
-        byte[] plain = writePlain(sheetName, headers, rows, columnWidthsChars);
+    public byte[] export(List<ExcelSheetData> sheets, String password) {
+        byte[] plain = writePlain(sheets);
         if (password == null || password.isBlank()) {
             return plain;
         }
         return encrypt(plain, password);
     }
 
-    private byte[] writePlain(String sheetName, List<String> headers, List<List<Object>> rows,
-            List<Integer> columnWidthsChars) {
+    // 시트 하나만 필요한 가장 흔한 경우(예: 보안 로그)를 위한 편의 오버로드.
+    public byte[] export(String sheetName, List<String> headers, List<List<Object>> rows,
+            List<Integer> columnWidthsChars, String password) {
+        return export(List.of(new ExcelSheetData(sheetName, headers, rows, columnWidthsChars)), password);
+    }
+
+    private byte[] writePlain(List<ExcelSheetData> sheets) {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
-            Sheet sheet = workbook.createSheet(sheetName);
             CellStyle headerStyle = headerStyle(workbook);
-
-            Row headerRow = sheet.createRow(0);
-            for (int col = 0; col < headers.size(); col++) {
-                Cell cell = headerRow.createCell(col);
-                cell.setCellValue(headers.get(col));
-                cell.setCellStyle(headerStyle);
-            }
-
-            int rowIndex = 1;
-            for (List<Object> rowValues : rows) {
-                Row row = sheet.createRow(rowIndex++);
-                for (int col = 0; col < rowValues.size(); col++) {
-                    Object value = rowValues.get(col);
-                    // null은 셀 자체를 만들지 않고 비워둔다(createCell만 하고 값을 안 채우면
-                    // "빈 값"이 아니라 빈 문자열 셀이 생겨 호출부의 null 판별 로직과 어긋남).
-                    if (value != null) {
-                        writeCell(row.createCell(col), value);
-                    }
-                }
-            }
-
-            if (columnWidthsChars != null) {
-                for (int col = 0; col < columnWidthsChars.size(); col++) {
-                    sheet.setColumnWidth(col, columnWidthsChars.get(col) * 256);
-                }
+            for (ExcelSheetData sheetData : sheets) {
+                writeSheet(workbook, sheetData, headerStyle);
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -84,10 +65,39 @@ public class ExcelExportService {
         }
     }
 
-    private void writeCell(Cell cell, Object value) {
-        if (value == null) {
-            return;
+    private void writeSheet(SXSSFWorkbook workbook, ExcelSheetData sheetData, CellStyle headerStyle) {
+        Sheet sheet = workbook.createSheet(sheetData.sheetName());
+
+        Row headerRow = sheet.createRow(0);
+        List<String> headers = sheetData.headers();
+        for (int col = 0; col < headers.size(); col++) {
+            Cell cell = headerRow.createCell(col);
+            cell.setCellValue(headers.get(col));
+            cell.setCellStyle(headerStyle);
         }
+
+        int rowIndex = 1;
+        for (List<Object> rowValues : sheetData.rows()) {
+            Row row = sheet.createRow(rowIndex++);
+            for (int col = 0; col < rowValues.size(); col++) {
+                Object value = rowValues.get(col);
+                // null은 셀 자체를 만들지 않고 비워둔다(createCell만 하고 값을 안 채우면
+                // "빈 값"이 아니라 빈 문자열 셀이 생겨 호출부의 null 판별 로직과 어긋남).
+                if (value != null) {
+                    writeCell(row.createCell(col), value);
+                }
+            }
+        }
+
+        List<Integer> columnWidthsChars = sheetData.columnWidthsChars();
+        if (columnWidthsChars != null) {
+            for (int col = 0; col < columnWidthsChars.size(); col++) {
+                sheet.setColumnWidth(col, columnWidthsChars.get(col) * 256);
+            }
+        }
+    }
+
+    private void writeCell(Cell cell, Object value) {
         if (value instanceof Number number) {
             cell.setCellValue(number.doubleValue());
         } else {

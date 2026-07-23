@@ -1,12 +1,22 @@
 package kr.co.dh.globelog.mytrip;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import kr.co.dh.globelog.admin.ActivityStatsResponse;
 import kr.co.dh.globelog.admin.ActivityStatsService;
 import kr.co.dh.globelog.admin.AdminStatsResponse;
+import kr.co.dh.globelog.admin.StatsExcelWriter;
 import kr.co.dh.globelog.admin.StatsService;
+import kr.co.dh.globelog.domain.SecurityActorType;
+import kr.co.dh.globelog.domain.SecurityEventType;
 import kr.co.dh.globelog.domain.User;
 import kr.co.dh.globelog.security.CurrentUserResolver;
+import kr.co.dh.globelog.security.audit.SecurityAuditService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,15 +32,22 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/my/stats")
 public class MyStatsController {
 
+    private static final DateTimeFormatter EXPORT_FILENAME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
     private final StatsService statsService;
     private final ActivityStatsService activityStatsService;
     private final CurrentUserResolver currentUserResolver;
+    private final StatsExcelWriter statsExcelWriter;
+    private final SecurityAuditService securityAuditService;
 
     public MyStatsController(StatsService statsService, ActivityStatsService activityStatsService,
-            CurrentUserResolver currentUserResolver) {
+            CurrentUserResolver currentUserResolver, StatsExcelWriter statsExcelWriter,
+            SecurityAuditService securityAuditService) {
         this.statsService = statsService;
         this.activityStatsService = activityStatsService;
         this.currentUserResolver = currentUserResolver;
+        this.statsExcelWriter = statsExcelWriter;
+        this.securityAuditService = securityAuditService;
     }
 
     @GetMapping
@@ -51,6 +68,27 @@ public class MyStatsController {
     public ActivityStatsResponse activity(Authentication authentication) {
         User viewer = requireLoggedIn(authentication);
         return activityStatsService.computeForUser(viewer.getId());
+    }
+
+    // 개인 통계는 파일 저장 용량(관리자 전용) 없이 여행 커버리지 + 활동 통계만 담는다.
+    @GetMapping("/export")
+    @ResponseBody
+    public ResponseEntity<byte[]> export(Authentication authentication) {
+        User viewer = requireLoggedIn(authentication);
+        byte[] excelBytes = statsExcelWriter.write(
+                statsService.computeForUser(viewer.getId()), activityStatsService.computeForUser(viewer.getId()),
+                null);
+        String filename = "my-stats-" + LocalDateTime.now().format(EXPORT_FILENAME_FORMAT) + ".xlsx";
+
+        securityAuditService.record(SecurityEventType.EXCEL_EXPORT, SecurityActorType.USER,
+                viewer.getId(), viewer.getNickname(), "MY_STATS", null, "내 통계 다운로드");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename).build().toString())
+                .body(excelBytes);
     }
 
     private User requireLoggedIn(Authentication authentication) {
