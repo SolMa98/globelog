@@ -168,7 +168,17 @@
       "Bash(find / -maxdepth 8 -iname \"admin-modal.js\" -not -path \"*/node_modules/*\")",
       "Bash(find / -iname \"rooms.html\" -not -path \"*/node_modules/*\")",
       "Bash(find / -iname \"admin-modal.js\" -not -path \"*/node_modules/*\")",
-      "Bash(find / -iname \"pom.xml\" -not -path \"*/node_modules/*\")"
+      "Bash(find / -iname \"pom.xml\" -not -path \"*/node_modules/*\")",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(cp .env.example .env)",
+      "Bash(openssl rand *)",
+      "Bash(sed -i '' \"s/^APP_CRYPTO_SECRET_KEY=$/APP_CRYPTO_SECRET_KEY=$\\(openssl rand -base64 32\\)/\" .env)",
+      "Bash(KEY=$\\(openssl rand -base64 32\\) python3 -)",
+      "Bash(SERVER_PORT=18080 docker compose up -d app)",
+      "Bash(docker volume rm *)",
+      "Bash(rm -f /tmp/cj.txt /tmp/cp.html)",
+      "Bash(rm -rf /private/tmp/claude-501/-Users-cnai01-Documents-work-side/bf24d5c2-ea1f-40db-a69f-39a83bcd1ab6/scratchpad/puppet/node_modules)"
     ]
   }
 }

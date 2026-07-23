@@ -1,0 +1,10 @@
+.git
+.gradle
+.idea
+.claude
+build
+uploads
+HELP.md
+README.md
+local-secrets.properties
+*.md

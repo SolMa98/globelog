@@ -63,6 +63,23 @@ export APP_CRYPTO_SECRET_KEY=$(openssl rand -base64 32)
 - 관리자 계정 생성(계정: `admin` / 비밀번호: `changeme123`). 이 계정은 `must_change_password` 플래그가 켜진 채로 만들어져서, 최초 로그인 시 `/admin/change-password`로 강제 이동되고 비밀번호를 바꾸기 전까지는 다른 어드민 화면에 들어갈 수 없음(신규 관리자 계정을 추가로 만들 때도 동일하게 적용됨). 배포 시에는 `ADMIN_BOOTSTRAP_PASSWORD` 환경변수로 최초 비밀번호 자체도 바꿀 수 있음 — 단, 이미 계정이 생성된 이후에는 이 값을 바꿔도 기존 비밀번호에 영향 없음
 - 전세계 236개국 국가 마스터 데이터 자동 등록(`countries-ref.json` 기반, 이미 등록된 국가는 건드리지 않고 없는 것만 채움 — 재기동해도 안전)
 
+### 3-1. Docker로 실행하기 (앱 + MariaDB 한 번에)
+
+DB를 직접 설치하지 않고 앱과 MariaDB를 함께 컨테이너로 띄우는 방법입니다.
+
+```bash
+cp .env.example .env
+# .env에서 APP_CRYPTO_SECRET_KEY를 채운다 (필수 — 없으면 기동 실패)
+#   openssl rand -base64 32
+docker compose up -d --build
+```
+
+`http://localhost:15790`에서 서비스가 뜹니다(`.env`의 `SERVER_PORT`로 변경 가능). DB 데이터와 업로드 파일은 각각 `db-data`, `uploads-data` named volume에 저장되어 컨테이너를 내렸다 올려도(`docker compose down`, `-v` 없이) 유지됩니다.
+
+- `.env`의 선택 연동 환경변수(소셜 로그인, 메일, 본인인증, 푸시 등)는 4단계 표와 동일한 항목이며, 비워두면 해당 기능만 개별적으로 비활성화됩니다.
+- DB 컨테이너 포트(3306)는 기본적으로 호스트에 노출하지 않습니다. 로컬 DB 클라이언트로 직접 붙어야 하면 `docker-compose.yml`의 `db` 서비스에 `ports: ["3306:3306"]`를 추가하세요.
+- 완전히 초기화하려면 `docker compose down -v`(볼륨까지 삭제 — DB/업로드 데이터가 사라지므로 주의).
+
 ### 4. (선택) 외부 연동 환경변수
 
 아래 값들이 없어도 앱은 정상적으로 기동됩니다 — 값이 없으면 해당 기능만 개별적으로 실패합니다(예: 소셜 로그인 버튼을 눌러도 provider가 거절, 인증 메일 발송 실패 로그만 남음).

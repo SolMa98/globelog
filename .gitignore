@@ -39,3 +39,4 @@ out/
 ### App ###
 /uploads/
 /local-secrets.properties
+/.env
