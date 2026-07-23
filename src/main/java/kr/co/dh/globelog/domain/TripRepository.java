@@ -24,6 +24,15 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT COUNT(DISTINCT t.country.id) FROM Trip t WHERE t.user.id = :userId")
     long countDistinctCountryByUserId(@Param("userId") Long userId);
 
+    // 통계 화면(개인/관리자)의 "조회수" 카드용 — 삭제된 게시글의 조회수는 함께 사라짐
+    // (등록/수정/삭제 건수는 SecurityEventLog로 별도 집계해 삭제 후에도 남지만, 조회수
+    // 자체는 Trip.viewCount 필드가 유일한 출처라 현재 존재하는 게시글 기준으로만 합산됨).
+    @Query("SELECT COALESCE(SUM(t.viewCount), 0) FROM Trip t")
+    long sumViewCount();
+
+    @Query("SELECT COALESCE(SUM(t.viewCount), 0) FROM Trip t WHERE t.user.id = :userId")
+    long sumViewCountByUserId(@Param("userId") Long userId);
+
     Page<Trip> findByRegionId(Long regionId, Pageable pageable);
 
     Page<Trip> findByCountryId(Long countryId, Pageable pageable);

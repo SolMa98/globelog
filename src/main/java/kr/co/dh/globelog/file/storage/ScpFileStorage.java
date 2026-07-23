@@ -78,6 +78,12 @@ public class ScpFileStorage implements FileStorage, AutoCloseable {
     }
 
     @Override
+    public long size(String relativePath) throws IOException {
+        ensureConnected();
+        return Files.size(resolve(relativePath));
+    }
+
+    @Override
     public void close() {
         synchronized (connectionLock) {
             closeQuietly(fileSystem);

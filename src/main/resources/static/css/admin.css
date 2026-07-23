@@ -1796,6 +1796,25 @@ tbody tr.row-active {
     }
 }
 
+/* 활동 통계/파일 저장 용량처럼 차트 없이 숫자만 보여주는 타일 여러 개를 나열할 때 —
+   .stats-grid(방문국가 도넛+연도별차트 2열 레이아웃 전용)와는 별개 그리드. */
+.stats-grid-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.stats-grid-tiles .stat-card {
+    margin-bottom: 0;
+    border-radius: 18px;
+}
+
+.stats-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+}
+
 /* ── 채팅(DM/그룹/개인방) ─────────────────────────────────── */
 .chat-room-list {
     list-style: none;

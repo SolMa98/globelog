@@ -16,4 +16,7 @@ public interface FileStorage {
     InputStream load(String relativePath) throws IOException;
 
     void delete(String relativePath) throws IOException;
+
+    // 관리자 파일 저장 용량 통계(FileStorageStatsService)용 — 바이트 단위 실제 파일 크기.
+    long size(String relativePath) throws IOException;
 }

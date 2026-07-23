@@ -43,6 +43,11 @@ public class LocalFileStorage implements FileStorage {
         Files.deleteIfExists(resolve(relativePath));
     }
 
+    @Override
+    public long size(String relativePath) throws IOException {
+        return Files.size(resolve(relativePath));
+    }
+
     private Path resolve(String relativePath) {
         RelativePathValidator.validate(relativePath);
         Path resolved = baseDir.resolve(relativePath).normalize();

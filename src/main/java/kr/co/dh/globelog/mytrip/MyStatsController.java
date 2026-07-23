@@ -1,5 +1,7 @@
 package kr.co.dh.globelog.mytrip;
 
+import kr.co.dh.globelog.admin.ActivityStatsResponse;
+import kr.co.dh.globelog.admin.ActivityStatsService;
 import kr.co.dh.globelog.admin.AdminStatsResponse;
 import kr.co.dh.globelog.admin.StatsService;
 import kr.co.dh.globelog.domain.User;
@@ -21,10 +23,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class MyStatsController {
 
     private final StatsService statsService;
+    private final ActivityStatsService activityStatsService;
     private final CurrentUserResolver currentUserResolver;
 
-    public MyStatsController(StatsService statsService, CurrentUserResolver currentUserResolver) {
+    public MyStatsController(StatsService statsService, ActivityStatsService activityStatsService,
+            CurrentUserResolver currentUserResolver) {
         this.statsService = statsService;
+        this.activityStatsService = activityStatsService;
         this.currentUserResolver = currentUserResolver;
     }
 
@@ -39,6 +44,13 @@ public class MyStatsController {
     public AdminStatsResponse data(Authentication authentication) {
         User viewer = requireLoggedIn(authentication);
         return statsService.computeForUser(viewer.getId());
+    }
+
+    @GetMapping("/activity")
+    @ResponseBody
+    public ActivityStatsResponse activity(Authentication authentication) {
+        User viewer = requireLoggedIn(authentication);
+        return activityStatsService.computeForUser(viewer.getId());
     }
 
     private User requireLoggedIn(Authentication authentication) {

@@ -48,11 +48,37 @@
             </div>
         </div>
     </div>
+
+    <h2 class="stats-section-title">활동 통계</h2>
+    <p class="muted" style="margin:-8px 0 16px;font-size:13px">ⓘ 내 게시글/채팅 활동만 집계됩니다.</p>
+    <div class="stats-grid-tiles">
+        <div class="card stat-card">
+            <div class="stat-label">조회수</div>
+            <div class="stat-number" id="activity-view-count">-</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-label">채팅 메시지</div>
+            <div class="stat-number" id="activity-chat-count">-</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-label">게시글 등록</div>
+            <div class="stat-number" id="activity-trip-create">-</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-label">게시글 수정</div>
+            <div class="stat-number" id="activity-trip-update">-</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-label">게시글 삭제</div>
+            <div class="stat-number" id="activity-trip-delete">-</div>
+        </div>
+    </div>
 </main>
 </div>
 <script th:src="@{/js/theme.js}"></script>
 <script th:src="@{/js/vendor/chart.min.js}"></script>
 <script th:src="@{/js/stats-charts.js}"></script>
+<script th:src="@{/js/activity-stats.js}"></script>
 <script th:src="@{/js/my-stats.js}"></script>
 </body>
 </html>

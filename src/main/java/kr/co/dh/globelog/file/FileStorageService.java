@@ -9,11 +9,15 @@ import java.util.Set;
 import java.util.UUID;
 import kr.co.dh.globelog.file.storage.FileStorage;
 import kr.co.dh.globelog.file.storage.FileStorageProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileStorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
 
@@ -101,6 +105,18 @@ public class FileStorageService {
             fileStorage.delete(relativePath);
         } catch (IOException e) {
             throw new UncheckedIOException("파일 삭제에 실패했습니다: " + relativePath, e);
+        }
+    }
+
+    // 관리자 파일 저장 용량 통계용. DB에는 경로만 있고 존재 여부가 보장되지 않는 레코드가
+    // 섞여 있을 수 있어(수동 삭제, 마이그레이션 누락 등) 예외 시 0을 반환하고 넘어간다 —
+    // 파일 하나 조회 실패로 통계 화면 전체가 깨지면 안 되기 때문.
+    public long sizeOfOrZero(String relativePath) {
+        try {
+            return fileStorage.size(relativePath);
+        } catch (IOException e) {
+            log.warn("파일 크기 조회 실패(통계에서 0으로 처리): {}", relativePath, e);
+            return 0L;
         }
     }
 

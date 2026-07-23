@@ -20,7 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatAttachmentCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatAttachmentCleanupService.class);
-    private static final int RETENTION_MONTHS = 3;
+
+    // 관리자 파일 저장 용량 통계(FileStorageStatsService)가 "곧 삭제될 파일" 판단 기준으로
+    // 이 값을 그대로 참조한다 — 정리 주기와 통계 화면의 기준이 어긋나지 않게 하기 위함.
+    public static final int RETENTION_MONTHS = 3;
 
     private final ChatMessageRepository chatMessageRepository;
     private final FileStorageService fileStorageService;
