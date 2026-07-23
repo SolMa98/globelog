@@ -1508,6 +1508,17 @@ project_auth_profile_redesign 메모리 참고. */
     border-bottom: 1px solid var(--border);
 }
 
+/* 테이블 카드 내부에 안내/에러 문구를 배너로 둘 때(.table-card는 padding이 없어
+   overflow:hidden+border-radius에 텍스트가 바로 붙어버림 — .list-toolbar와 같은
+   여백으로 맞춘다) */
+.table-card > .info,
+.table-card > .error {
+    display: block;
+    margin: 0;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
 .list-toolbar-title {
     font-size: 14px;
     font-weight: 700;
